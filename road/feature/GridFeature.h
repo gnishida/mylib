@@ -45,8 +45,8 @@ public:
 	void save(QString filename);
 	void save(QDomDocument& doc, QDomNode& node);
 
-	QColor color();
-	Polygon2D polygon();
+	QColor color() const;
+	Polygon2D polygon() const;
 };
 
 typedef boost::shared_ptr<GridFeature> GridFeaturePtr;

@@ -3,7 +3,7 @@
 #include <QTextStream>
 #include <random>
 #include "GridFeature.h"
-#include "../common/Util.h"
+#include "../../common/Util.h"
 
 GridFeature::GridFeature(int group_id) : AbstractFeature() {
 	_type = TYPE_GRID;
@@ -354,14 +354,14 @@ void GridFeature::save(QDomDocument& doc, QDomNode& root) {
 /**
  * 領域を塗りつぶすための色を自動で生成する。
  */
-QColor GridFeature::color() {
+QColor GridFeature::color() const {
 	return QColor(0, 0, 255 - group_id * 64 % 255);
 }
 
 /**
  * 領域を表すポリゴンを返却する。
  */
-Polygon2D GridFeature::polygon() {
+Polygon2D GridFeature::polygon() const {
 	return _polygon;
 }
 

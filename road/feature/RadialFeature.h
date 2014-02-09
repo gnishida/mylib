@@ -5,7 +5,7 @@
 #include <QVector2D>
 #include <boost/shared_ptr.hpp>
 #include "AbstractFeature.h"
-#include "../common/Polygon2D.h"
+#include "../../common/Polygon2D.h"
 
 class RadialFeature : public AbstractFeature {
 public:

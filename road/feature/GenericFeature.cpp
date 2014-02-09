@@ -2,8 +2,8 @@
 #include <QDomDocument>
 #include <QTextStream>
 #include "GenericFeature.h"
-#include "../common/common.h"
-#include "../common/Util.h"
+#include "../../common/common.h"
+#include "../../common/Util.h"
 
 GenericFeature::GenericFeature() : AbstractFeature() {
 	_type = TYPE_GENERIC;
