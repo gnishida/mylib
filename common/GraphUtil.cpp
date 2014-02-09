@@ -421,11 +421,11 @@ int GraphUtil::getNumEdges(RoadGraph& roads, RoadVertexDesc v, int roadType, boo
  * Add an edge.
  * This function creates a straight line of edge.
  */
-RoadEdgeDesc GraphUtil::addEdge(RoadGraph& roads, RoadVertexDesc src, RoadVertexDesc tgt, unsigned int type, unsigned int lanes, bool oneWay) {
+RoadEdgeDesc GraphUtil::addEdge(RoadGraph& roads, RoadVertexDesc src, RoadVertexDesc tgt, unsigned int type, unsigned int lanes, bool oneWay, bool link, bool roundabout) {
 	roads.setModified();
 
 	// エッジを新規追加する
-	RoadEdgePtr e = RoadEdgePtr(new RoadEdge(type, lanes, oneWay));
+	RoadEdgePtr e = RoadEdgePtr(new RoadEdge(type, lanes, oneWay, link, roundabout));
 	e->addPoint(roads.graph[src]->getPt());
 	e->addPoint(roads.graph[tgt]->getPt());
 
@@ -823,8 +823,6 @@ std::vector<QVector2D> GraphUtil::finerEdge(RoadGraph& roads, RoadEdgeDesc e, fl
  * Load the road from a file.
  */
 void GraphUtil::loadRoads(RoadGraph& roads, const QString& filename, int roadType) {
-	clock_t start, end;
-
 	roads.clear();
 
 	FILE* fp = fopen(filename.toUtf8().data(), "rb");
@@ -836,7 +834,6 @@ void GraphUtil::loadRoads(RoadGraph& roads, const QString& filename, int roadTyp
 	fread(&nVertices, sizeof(unsigned int), 1, fp);
 
 	// Read each vertex's information: desc, x, and y.
-	start = clock();
 	for (int i = 0; i < nVertices; i++) {
 		RoadVertexDesc id;
 		float x, y;
@@ -851,15 +848,12 @@ void GraphUtil::loadRoads(RoadGraph& roads, const QString& filename, int roadTyp
 
 		idToDesc[id] = desc;
 	}
-	end = clock();
-	std::cout << "load vertices: " << (double)(end-start)/CLOCKS_PER_SEC << std::endl;
 
 	// Read the number of edges
 	unsigned int nEdges;
 	fread(&nEdges, sizeof(unsigned int), 1, fp);
 
 	// Read each edge's information: the descs of two vertices, road type, the number of lanes, the number of points along the polyline, and the coordinate of each point along the polyline.
-	start = clock();
 	for (int i = 0; i < nEdges; i++) {
 		RoadEdgePtr edge = RoadEdgePtr(new RoadEdge(1, 1, false));
 
@@ -873,6 +867,8 @@ void GraphUtil::loadRoads(RoadGraph& roads, const QString& filename, int roadTyp
 		fread(&edge->type, sizeof(unsigned int), 1, fp);
 		fread(&edge->lanes, sizeof(unsigned int), 1, fp);
 		fread(&edge->oneWay, sizeof(unsigned int), 1, fp);
+		fread(&edge->link, sizeof(unsigned int), 1, fp);
+		fread(&edge->roundabout, sizeof(unsigned int), 1, fp);
 
 		unsigned int nPoints;
 		fread(&nPoints, sizeof(unsigned int), 1, fp);
@@ -891,8 +887,6 @@ void GraphUtil::loadRoads(RoadGraph& roads, const QString& filename, int roadTyp
 			roads.graph[edge_pair.first] = edge;
 		}
 	}
-	end = clock();
-	std::cout << "load edges: " << (double)(end-start)/CLOCKS_PER_SEC << std::endl;
 
 	fclose(fp);
 
@@ -903,19 +897,15 @@ void GraphUtil::loadRoads(RoadGraph& roads, const QString& filename, int roadTyp
  * Save the road to a file.
  */
 void GraphUtil::saveRoads(RoadGraph& roads, const QString& filename) {
-	RoadGraph temp;
-	copyRoads(roads, temp);
-	clean(temp);
-
 	FILE* fp = fopen(filename.toUtf8().data(), "wb");
 	
-	int nVertices = boost::num_vertices(temp.graph);
+	int nVertices = boost::num_vertices(roads.graph);
 	fwrite(&nVertices, sizeof(int), 1, fp);
 
 	// 各頂点につき、ID、X座標、Y座標を出力する
 	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(temp.graph); vi != vend; ++vi) {
-		RoadVertexPtr v = temp.graph[*vi];
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		RoadVertexPtr v = roads.graph[*vi];
 	
 		RoadVertexDesc desc = *vi;
 		float x = v->getPt().x();
@@ -925,16 +915,16 @@ void GraphUtil::saveRoads(RoadGraph& roads, const QString& filename) {
 		fwrite(&y, sizeof(float), 1, fp);
 	}
 
-	int nEdges = boost::num_edges(temp.graph);
+	int nEdges = boost::num_edges(roads.graph);
 	fwrite(&nEdges, sizeof(int), 1, fp);
 
 	// 各エッジにつき、２つの頂点の各ID、道路タイプ、レーン数、一方通行か、ポリラインを構成するポイント数、各ポイントのX座標とY座標を出力する
 	RoadEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::edges(temp.graph); ei != eend; ++ei) {
-		RoadEdgePtr edge = temp.graph[*ei];
+	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
+		RoadEdgePtr edge = roads.graph[*ei];
 
-		RoadVertexDesc src = boost::source(*ei, temp.graph);
-		RoadVertexDesc tgt = boost::target(*ei, temp.graph);
+		RoadVertexDesc src = boost::source(*ei, roads.graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 
 		fwrite(&src, sizeof(RoadVertexDesc), 1, fp);
 		fwrite(&tgt, sizeof(RoadVertexDesc), 1, fp);
@@ -945,6 +935,7 @@ void GraphUtil::saveRoads(RoadGraph& roads, const QString& filename) {
 		unsigned int lanes = edge->lanes;
 		fwrite(&lanes, sizeof(unsigned int), 1, fp);
 
+		// oneWay? (1 / 0)
 		unsigned int oneWay;
 		if (edge->oneWay) {
 			oneWay = 1;
@@ -953,12 +944,30 @@ void GraphUtil::saveRoads(RoadGraph& roads, const QString& filename) {
 		}
 		fwrite(&oneWay, sizeof(unsigned int), 1, fp);
 
+		// link? (1 / 0)
+		unsigned int link;
+		if (edge->link) {
+			link = 1;
+		} else {
+			link = 0;
+		}
+		fwrite(&link, sizeof(unsigned int), 1, fp);
+
+		// roundabout? (1 / 0)
+		unsigned int roundabout;
+		if (edge->roundabout) {
+			roundabout = 1;
+		} else {
+			roundabout = 0;
+		}
+		fwrite(&roundabout, sizeof(unsigned int), 1, fp);
+
 		int nPoints = edge->polyLine.size();
 		fwrite(&nPoints, sizeof(int), 1, fp);
 
-		for (int i = 0; i < edge->getPolyLine().size(); i++) {
-			float x = edge->getPolyLine()[i].x();
-			float y = edge->getPolyLine()[i].y();
+		for (int i = 0; i < edge->polyLine.size(); i++) {
+			float x = edge->polyLine[i].x();
+			float y = edge->polyLine[i].y();
 			fwrite(&x, sizeof(float), 1, fp);
 			fwrite(&y, sizeof(float), 1, fp);
 		}

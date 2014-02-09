@@ -8,8 +8,6 @@ const float Util::MTC_FLOAT_TOL = 1e-6f;
  * If the 
  */
 float Util::pointSegmentDistanceXY(const QVector3D &a, const QVector3D &b, const QVector3D &c, bool segmentOnly) {
-	float dist;		
-
 	float r_numerator = (c.x()-a.x())*(b.x()-a.x()) + (c.y()-a.y())*(b.y()-a.y());
 	float r_denomenator = (b.x()-a.x())*(b.x()-a.x()) + (b.y()-a.y())*(b.y()-a.y());
 	float r = r_numerator / r_denomenator;
@@ -27,6 +25,21 @@ float Util::pointSegmentDistanceXY(const QVector3D &a, const QVector3D &b, const
 	}
 }
 
+QVector2D Util::projLatLonToMeter(double longitude, double latitude, const QVector2D &centerLatLon) {
+	QVector2D result;
+
+	double y = latitude / 180 * M_PI;
+	double dx = (longitude - centerLatLon.x()) / 180 * M_PI;
+	double dy = (latitude - centerLatLon.y()) / 180 * M_PI;
+
+	double radius = 6378137;
+
+	result.setX(radius * cos(y) * dx);
+	result.setY(radius * dy);
+
+	return  result; 
+}
+
 /**
  * Project latitude/longitude coordinate to world coordinate.
  * Mercator projection cannot be used for this purpose, becuase
@@ -42,35 +55,17 @@ float Util::pointSegmentDistanceXY(const QVector3D &a, const QVector3D &b, const
 QVector2D Util::projLatLonToMeter(const QVector2D &latLon, const QVector2D &centerLatLon) {
 	QVector2D result;
 
-	float y = latLon.y() / 180.0f * M_PI;
-	float dx = (latLon.x() - centerLatLon.x()) / 180.0f * M_PI;
-	float dy = (latLon.y() - centerLatLon.y()) / 180.0f * M_PI;
+	double y = latLon.y() / 180 * M_PI;
+	double dx = (latLon.x() - centerLatLon.x()) / 180 * M_PI;
+	double dy = (latLon.y() - centerLatLon.y()) / 180 * M_PI;
 
-	float radius = 6378137.0f;;
+	double radius = 6378137;
 
 	result.setX(radius * cos(y) * dx);
 	result.setY(radius * dy);
 
 	return  result; 
 }
-
-/*
-QVector3D Util::projLatLonToMeter(const QVector3D &latLon, const QVector3D &centerLatLon) {
-	QVector3D result;
-
-	float y = latLon.y() / 180.0f * M_PI;
-	float dx = (latLon.x() - centerLatLon.x()) / 180.0f * M_PI;
-	float dy = (latLon.y() - centerLatLon.y()) / 180.0f * M_PI;
-
-	float radius = 6378137.0f;;
-
-	result.setX(radius * cos(y) * dx);
-	result.setY(radius * dy);
-	result.setZ(0.0f);
-
-	return  result; 
-}
-*/
 
 /**
  * Computes the intersection between two line segments on the XY plane.
