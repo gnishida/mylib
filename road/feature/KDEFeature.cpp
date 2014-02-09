@@ -1,5 +1,6 @@
-﻿#include "KDEFeature.h"
-
+﻿#include <QDomDocument>
+#include <QTextStream>
+#include "KDEFeature.h"
 
 KDEFeature::KDEFeature() : AbstractFeature() {
 	_type = TYPE_GENERIC;
@@ -9,10 +10,7 @@ KDEFeature::KDEFeature() : AbstractFeature() {
  * 与えられたfeatureノード配下のXML情報に基づいて、グリッド特徴量を設定する。
  */
 void KDEFeature::load(QDomNode& node) {
-	avenueLengths.clear();
-	streetLengths.clear();
-	avenueNumDirections.clear();
-	streetNumDirections.clear();
+	items.clear();
 
 	_weight = node.toElement().attribute("weight").toFloat();
 
@@ -29,17 +27,17 @@ void KDEFeature::load(QDomNode& node) {
 
 				child2 = child2.nextSibling();
 			}
-		} else if (child.toElement().tagName() == "avenue") {
-			loadAvenue(child);
-		} else if (child.toElement().tagName() == "street") {
-			loadStreet(child);
+		} else if (child.toElement().tagName() == "item") {
+			KDEFeatureItem item;
+			item.load(child);
+			items.push_back(item);
 		}
 
 		child = child.nextSibling();
 	}
 }
 
-void GenericFeature::save(QDomDocument& doc, QDomNode& root) {
+void KDEFeature::save(QDomDocument& doc, QDomNode& root) {
 	QString str;
 
 	str.setNum(_weight);
@@ -66,13 +64,10 @@ void GenericFeature::save(QDomDocument& doc, QDomNode& root) {
 	QDomText node_center_y_value = doc.createTextNode(str);
 	node_center_y.appendChild(node_center_y_value);
 
-	// write avenue node
-	QDomElement node_avenue = doc.createElement("avenue");
-	node_feature.appendChild(node_avenue);
-	saveAvenue(doc, node_avenue);
-
-	// write street node
-	QDomElement node_street = doc.createElement("street");
-	node_feature.appendChild(node_street);
-	saveStreet(doc, node_street);
+	for (int i = 0; i < items.size(); ++i) {
+		// write item node
+		QDomElement node_item = doc.createElement("item");
+		node_feature.appendChild(node_item);
+		items[i].save(doc, node_item);
+	}
 }
