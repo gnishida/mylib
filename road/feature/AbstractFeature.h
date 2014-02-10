@@ -7,7 +7,7 @@
 
 class AbstractFeature {
 public:
-	static enum { TYPE_GRID = 0, TYPE_RADIAL, TYPE_GENERIC };
+	static enum { TYPE_GRID = 0, TYPE_RADIAL, TYPE_KDE, TYPE_GENERIC };
 
 protected:
 	int _type;

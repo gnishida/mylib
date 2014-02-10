@@ -3,7 +3,16 @@
 #include "KDEFeature.h"
 
 KDEFeature::KDEFeature() : AbstractFeature() {
-	_type = TYPE_GENERIC;
+	_type = TYPE_KDE;
+}
+
+KDEFeature::KDEFeature(int group_id) : AbstractFeature() {
+	_type = TYPE_KDE;
+	this->group_id = group_id;
+}
+
+void KDEFeature::addItem(const KDEFeatureItem &item) {
+	items.push_back(item);
 }
 
 /**

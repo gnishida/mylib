@@ -27,6 +27,14 @@ void KDEFeatureItem::load(QDomNode& node) {
 }
 
 void KDEFeatureItem::save(QDomDocument& doc, QDomNode& node) {
-	// write edge node
+	for (int i = 0; i < angles.size(); ++i) {
+		QDomElement node_edge = doc.createElement("edge");
+		QString str;
+		str.setNum(angles[i]);
+		node_edge.setAttribute("angle", str);
+		str.setNum(lengths[i]);
+		node_edge.setAttribute("length", str);
+		node.appendChild(node_edge);
+	}
 }
 

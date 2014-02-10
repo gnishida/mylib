@@ -1,10 +1,11 @@
 #pragma once
 
 #include <vector>
+#include <road/feature/AbstractFeature.h>
 #include <road/feature/GridFeature.h>
 #include <road/feature/RadialFeature.h>
+#include <road/feature/KDEFeature.h>
 #include <road/feature/GenericFeature.h>
-#include <road/feature/AbstractFeature.h>
 
 class RoadFeature {
 public:
