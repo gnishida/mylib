@@ -3,8 +3,9 @@
 #include <QTextStream>
 #include "KDEFeatureItem.h"
 
-void KDEFeatureItem::addEdge(const QVector2D &edge) {
+void KDEFeatureItem::addEdge(const QVector2D &edge, bool deadend) {
 	edges.push_back(edge);
+	deadends.push_back(deadend);
 }
 
 /**
@@ -31,8 +32,10 @@ void KDEFeatureItem::load(QDomNode& node) {
 		if (child.toElement().tagName() == "edge") {
 			float x = child.toElement().attribute("x").toFloat();
 			float y = child.toElement().attribute("y").toFloat();
+			bool deadend = child.toElement().attribute("deadend").toInt() == 1 ? true : false;
 
 			edges.push_back(QVector2D(x, y));
+			deadends.push_back(deadend);
 		}
 
 		child = child.nextSibling();
@@ -47,6 +50,14 @@ void KDEFeatureItem::save(QDomDocument& doc, QDomNode& node) {
 		node_edge.setAttribute("x", str);
 		str.setNum(edges[i].y());
 		node_edge.setAttribute("y", str);
+		
+		if (deadends[i]) {
+			str.setNum(1);
+		} else {
+			str.setNum(0);
+		}
+		node_edge.setAttribute("deadend", str);
+
 		node.appendChild(node_edge);
 	}
 }

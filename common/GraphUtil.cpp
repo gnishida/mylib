@@ -29,6 +29,23 @@ int GraphUtil::getNumVertices(RoadGraph& roads, bool onlyValidVertex) {
 	return count;
 }
 
+int GraphUtil::getNumVertices(RoadGraph& roads, const QVector2D& pos, float radius) {
+	float radius2 = radius * radius;
+
+	int count = 0;
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		if (!roads.graph[*vi]->valid) continue;
+
+		if ((roads.graph[*vi]->pt - pos).lengthSquared() <= radius2) {
+			count++;
+		}
+	}
+
+	return count;
+}
+
 /**
  * Return the number of vertices which are connected to the specified vertex.
  */
@@ -318,6 +335,23 @@ void GraphUtil::snapVertex(RoadGraph& roads, RoadVertexDesc v1, RoadVertexDesc v
 RoadVertexDesc GraphUtil::getCentralVertex(RoadGraph& roads) {
 	BBox box = getAABoundingBox(roads);
 	return getVertex(roads, box.midPt());
+}
+
+float GraphUtil::getDensity(RoadGraph& roads, const QVector2D& pos, float radius) {
+	float radius2 = radius * radius;
+
+	int count = 0;
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		if (!roads.graph[*vi]->valid) continue;
+
+		if ((roads.graph[*vi]->pt - pos).lengthSquared() <= radius2) {
+			count++;
+		}
+	}
+
+	return (float)count / radius2 / M_PI;
 }
 
 /**

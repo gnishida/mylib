@@ -12,12 +12,13 @@
 class KDEFeatureItem {
 public:
 	std::vector<QVector2D> edges;
+	std::vector<bool> deadends;
 
 public:
 	KDEFeatureItem() {}
 	~KDEFeatureItem() {}
 
-	void addEdge(const QVector2D &edge);
+	void addEdge(const QVector2D &edge, bool deadend);
 	float getMinDistance(const QVector2D &edge) const;
 
 	void load(QDomNode& node);

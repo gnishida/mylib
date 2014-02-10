@@ -14,6 +14,7 @@ protected:
 public:
 	// Vertex related functions
 	static int getNumVertices(RoadGraph& roads, bool onlyValidVertex = true);
+	static int getNumVertices(RoadGraph& roads, const QVector2D& pos, float radius);
 	static int getNumConnectedVertices(RoadGraph& roads, RoadVertexDesc start, bool onlyValidVertex = true);
 	static RoadVertexDesc getVertex(RoadGraph& roads, int index, bool onlyValidVertex = true);
 	static RoadVertexDesc getVertex(RoadGraph& roads, const QVector2D& pt, bool onlyValidVertex = true);
@@ -28,6 +29,7 @@ public:
 	static void removeIsolatedVertices(RoadGraph& roads, bool onlyValidVertex = true);
 	static void snapVertex(RoadGraph& roads, RoadVertexDesc v1, RoadVertexDesc v2);
 	static RoadVertexDesc getCentralVertex(RoadGraph& roads);
+	static float getDensity(RoadGraph& roads, const QVector2D& pos, float radius);
 
 	// Edge related functions
 	static RoadEdgeDesc getEdge(RoadGraph& roads, int index, bool onlyValidEdge = true);

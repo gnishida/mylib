@@ -9,6 +9,7 @@
 class KDEFeature : public AbstractFeature {
 public:
 	int group_id;
+	float _density;						// how many vertices in 1km x 1km area
 	std::vector<KDEFeatureItem> items;
 
 public:
@@ -16,6 +17,7 @@ public:
 	KDEFeature(int group_id);
 	~KDEFeature() {}
 
+	void setDensity(float density);
 	void addItem(const KDEFeatureItem &item);
 
 	void load(QDomNode& node);

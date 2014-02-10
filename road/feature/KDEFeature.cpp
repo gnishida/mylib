@@ -11,6 +11,10 @@ KDEFeature::KDEFeature(int group_id) : AbstractFeature() {
 	this->group_id = group_id;
 }
 
+void KDEFeature::setDensity(float density) {
+	_density = density;
+}
+
 void KDEFeature::addItem(const KDEFeatureItem &item) {
 	items.push_back(item);
 }
@@ -36,6 +40,8 @@ void KDEFeature::load(QDomNode& node) {
 
 				child2 = child2.nextSibling();
 			}
+		} else if (child.toElement().tagName() == "density") {
+			_density = child.firstChild().nodeValue().toFloat();
 		} else if (child.toElement().tagName() == "item") {
 			KDEFeatureItem item;
 			item.load(child);
@@ -73,6 +79,15 @@ void KDEFeature::save(QDomDocument& doc, QDomNode& root) {
 	QDomText node_center_y_value = doc.createTextNode(str);
 	node_center_y.appendChild(node_center_y_value);
 
+	// write density
+	QDomElement node_density = doc.createElement("density");
+	node_feature.appendChild(node_density);
+
+	str.setNum(_density);
+	QDomText node_density_value = doc.createTextNode(str);
+	node_density.appendChild(node_density_value);
+
+	// write items
 	for (int i = 0; i < items.size(); ++i) {
 		// write item node
 		QDomElement node_item = doc.createElement("item");
