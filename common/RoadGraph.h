@@ -34,6 +34,9 @@ public:
 	float avenueHeight;
 	float widthBase;
 	float curbRatio;
+
+	bool showHighways;
+	bool showAvenues;
 	bool showLocalStreets;
 
 public:
