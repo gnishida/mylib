@@ -29,22 +29,28 @@ void RoadGraph::generateMesh() {
 
 		RoadEdgePtr edge = graph[*ei];
 
-		QColor color, bColor;
+		QColor color, bgColor;
 		float height;
 		switch (edge->type) {
 		case RoadEdge::TYPE_HIGHWAY:
+			height = highwayHeight;
+			break;
 		case RoadEdge::TYPE_BOULEVARD:
+			height = avenueHeight;
+			break;
 		case RoadEdge::TYPE_AVENUE:
+			height = avenueHeight;
+			break;
 		case RoadEdge::TYPE_STREET:
-			color = QColor(255, 255, 255);
-			bColor = QColor(217, 209, 201);
 			height = avenueHeight;
 			break;
 		}
 
 		color = graph[*ei]->color;
+		bgColor = graph[*ei]->bgColor;
 
 		// グループに基づいて色を決定
+		/*
 		switch (graph[*ei]->shapeType) {
 		case RoadEdge::SHAPE_DEFAULT:
 			color = QColor(255, 255, 255);
@@ -62,14 +68,15 @@ void RoadGraph::generateMesh() {
 			color = QColor(255, 255, 255);
 			break;
 		}
+		*/
 
 		// draw the border of the road segment
 		if ((showHighways && edge->type == RoadEdge::TYPE_HIGHWAY) || (showBoulevard && edge->type ==  RoadEdge::TYPE_BOULEVARD) || (showAvenues && edge->type ==  RoadEdge::TYPE_AVENUE) || (showLocalStreets && edge->type ==  RoadEdge::TYPE_STREET)) {
-			addMeshFromEdge(renderables[0], edge, widthBase * (1.0f + curbRatio), bColor, 0.0f);
+			addMeshFromEdge(renderables[0], edge, widthBase * (1.0f + curbRatio), bgColor, 0.0f);
 			addMeshFromEdge(renderables[0], edge, widthBase, color, height);
 		} else {
 			// If this is the local street and it should be drawn in gray color, it should be a little narrow line.
-			addMeshFromEdge(renderables[0], edge, widthBase * 0.6f, bColor, 0.0f);
+			addMeshFromEdge(renderables[0], edge, widthBase * 0.6f, bgColor, 0.0f);
 		}
 	}
 

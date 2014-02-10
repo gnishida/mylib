@@ -220,7 +220,8 @@ void GraphUtil::moveVertex(RoadGraph& roads, RoadVertexDesc v, const QVector2D& 
 	for (boost::tie(ei, eend) = boost::out_edges(v, roads.graph); ei != eend; ++ei) {
 		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 
-		std::vector<QVector2D> polyLine = roads.graph[*ei]->polyLine;
+		//std::vector<QVector2D> polyLine = roads.graph[*ei]->polyLine;
+		Polyline2D polyLine = roads.graph[*ei]->polyLine;
 		if ((polyLine[0] - roads.graph[v]->getPt()).lengthSquared() < (polyLine[0] - roads.graph[tgt]->getPt()).lengthSquared()) {
 			std::reverse(polyLine.begin(), polyLine.end());
 		}
@@ -889,8 +890,7 @@ void GraphUtil::loadRoads(RoadGraph& roads, const QString& filename, int roadTyp
 
 	// Read each edge's information: the descs of two vertices, road type, the number of lanes, the number of points along the polyline, and the coordinate of each point along the polyline.
 	for (int i = 0; i < nEdges; i++) {
-		RoadEdgePtr edge = RoadEdgePtr(new RoadEdge(1, 1, false));
-
+		unsigned int type, lanes, oneWay, link, roundabout;
 		RoadVertexDesc id1, id2;
 		fread(&id1, sizeof(RoadVertexDesc), 1, fp);
 		fread(&id2, sizeof(RoadVertexDesc), 1, fp);
@@ -898,11 +898,13 @@ void GraphUtil::loadRoads(RoadGraph& roads, const QString& filename, int roadTyp
 		RoadVertexDesc src = idToDesc[id1];
 		RoadVertexDesc tgt = idToDesc[id2];
 
-		fread(&edge->type, sizeof(unsigned int), 1, fp);
-		fread(&edge->lanes, sizeof(unsigned int), 1, fp);
-		fread(&edge->oneWay, sizeof(unsigned int), 1, fp);
-		fread(&edge->link, sizeof(unsigned int), 1, fp);
-		fread(&edge->roundabout, sizeof(unsigned int), 1, fp);
+		fread(&type, sizeof(unsigned int), 1, fp);
+		fread(&lanes, sizeof(unsigned int), 1, fp);
+		fread(&oneWay, sizeof(unsigned int), 1, fp);
+		fread(&link, sizeof(unsigned int), 1, fp);
+		fread(&roundabout, sizeof(unsigned int), 1, fp);
+
+		RoadEdgePtr edge = RoadEdgePtr(new RoadEdge(type, lanes, oneWay == 1, link == 1, roundabout == 1));
 
 		unsigned int nPoints;
 		fread(&nPoints, sizeof(unsigned int), 1, fp);

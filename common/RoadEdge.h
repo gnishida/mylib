@@ -4,6 +4,7 @@
 #include <Qvector2D>
 #include <QColor>
 #include <boost/shared_ptr.hpp>
+#include "common.h"
 
 class RoadEdge {
 public:
@@ -16,8 +17,10 @@ public:
 	bool oneWay;
 	bool link;
 	bool roundabout;
-	std::vector<QVector2D> polyLine;
+	//std::vector<QVector2D> polyLine;
+	Polyline2D polyLine;
 	QColor color;
+	QColor bgColor;
 
 	bool valid;			// if this edge is valid
 	bool seed;			// if this edge is used as a seed of a forest
