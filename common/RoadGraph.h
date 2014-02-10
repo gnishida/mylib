@@ -35,7 +35,12 @@ public:
 	float widthBase;
 	float curbRatio;
 
+	QColor colorHighway;
+	QColor colorBoulevard;
+	QColor colorAvenue;
+	QColor colorStreet;
 	bool showHighways;
+	bool showBoulevard;
 	bool showAvenues;
 	bool showLocalStreets;
 

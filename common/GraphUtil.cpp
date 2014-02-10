@@ -916,7 +916,7 @@ void GraphUtil::loadRoads(RoadGraph& roads, const QString& filename, int roadTyp
 		}
 
 		// 指定されたタイプの道路エッジのみを読み込む
-		if (((int)powf(2, (edge->type - 1)) & roadType)) {
+		if (isRoadTypeMatched(edge->type, roadType)) {
 			std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(src, tgt, roads.graph);
 			roads.graph[edge_pair.first] = edge;
 		}
@@ -1243,7 +1243,7 @@ void GraphUtil::extractRoads(RoadGraph& roads, int roadType) {
 	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
 		if (!roads.graph[*ei]->valid) continue;
 
-		if (!((int)powf(2.0f, roads.graph[*ei]->type - 1) & roadType)) {
+		if (isRoadTypeMatched(roads.graph[*ei]->type, roadType)) {
 			roads.graph[*ei]->valid = false;
 		}
 	}
@@ -1266,7 +1266,7 @@ void GraphUtil::extractRoads(RoadGraph& roads, Polygon2D& area, bool strict, int
 		RoadVertexDesc src = boost::source(*ei, roads.graph);
 		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 
-		if ((int)powf(2.0f, roads.graph[*ei]->type - 1) & roadType) {
+		if (isRoadTypeMatched(roads.graph[*ei]->type, roadType)) {
 			if (strict) {
 				// if either vertice is out of the range, invalidate this edge.
 				if (!area.contains(roads.graph[src]->pt) || !area.contains(roads.graph[tgt]->pt)) {
@@ -1302,7 +1302,7 @@ void GraphUtil::extractRoads2(RoadGraph& roads, Polygon2D& area, int roadType) {
 		RoadVertexDesc src = boost::source(*ei, roads.graph);
 		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 
-		if ((int)powf(2.0f, roads.graph[*ei]->type - 1) & roadType) {
+		if (isRoadTypeMatched(roads.graph[*ei]->type, roadType)) {
 			if (!area.contains(roads.graph[src]->pt) && !area.contains(roads.graph[tgt]->pt)) {
 				roads.graph[*ei]->valid = false;
 			} else if (!area.contains(roads.graph[src]->pt) || !area.contains(roads.graph[tgt]->pt)) {
@@ -2547,9 +2547,11 @@ void GraphUtil::removeShortDeadend(RoadGraph& roads, float threshold) {
 /**
  * 指定した道路エッジのタイプが、指定されたタイプに含まれるかチェックする。
  * 例えば、タイプとして3を指定した場合、Local streetsとAvenuesが含まれる。
- * 　　　　タイプとして7を指定した場合、全てのタイプのエッジが含まれることを意味する。
+ * 　　　　タイプとして0を指定した場合、全てのタイプのエッジが含まれることを意味する。
  */
 bool GraphUtil::isRoadTypeMatched(int type, int ref_type) {
+	if (ref_type == 0) return true;
+
 	if (((int)powf(2, (type - 1)) & ref_type)) return true;
 	else return false;
 }

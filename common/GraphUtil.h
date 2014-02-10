@@ -55,7 +55,7 @@ public:
 	static std::vector<QVector2D> finerEdge(RoadGraph& roads, RoadEdgeDesc e, float step = 1.0f);
 
 	// File I/O
-	static void loadRoads(RoadGraph& roads, const QString& filename, int roadType = 7);
+	static void loadRoads(RoadGraph& roads, const QString& filename, int roadType = 0);
 	static void saveRoads(RoadGraph& roads, const QString& filename);
 
 	// The entire graph related functions

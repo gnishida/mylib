@@ -96,7 +96,7 @@ void RoadGraphRenderer::renderPoint(const QVector2D& pt, const QColor& color, fl
 	renderOne(renderable);
 }
 
-void RoadGraphRenderer::renderPolyline(const Polygon2D& polyline, GLenum lineType, float height) {
+void RoadGraphRenderer::renderPolyline(const Polyline2D& polyline, GLenum lineType, float height) {
 	std::vector<RenderablePtr> renderables;
 	renderables.push_back(RenderablePtr(new Renderable(lineType, 3.0f)));
 	renderables.push_back(RenderablePtr(new Renderable(GL_POINTS, 10.0f)));

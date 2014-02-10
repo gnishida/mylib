@@ -5,6 +5,10 @@
 
 RoadGraph::RoadGraph() {
 	modified = true;
+
+	showHighways = true;
+	showBoulevard = true;
+	showAvenues = true;
 	showLocalStreets = true;
 }
 
@@ -28,9 +32,10 @@ void RoadGraph::generateMesh() {
 		QColor color, bColor;
 		float height;
 		switch (edge->type) {
-		case 3:	// high way
-		case 2: // avenue
-		case 1: // street
+		case RoadEdge::TYPE_HIGHWAY:
+		case RoadEdge::TYPE_BOULEVARD:
+		case RoadEdge::TYPE_AVENUE:
+		case RoadEdge::TYPE_STREET:
 			color = QColor(255, 255, 255);
 			bColor = QColor(217, 209, 201);
 			height = avenueHeight;
@@ -41,16 +46,16 @@ void RoadGraph::generateMesh() {
 
 		// グループに基づいて色を決定
 		switch (graph[*ei]->shapeType) {
-		case 0:
+		case RoadEdge::SHAPE_DEFAULT:
 			color = QColor(255, 255, 255);
 			break;
-		case 1:	// grid
+		case RoadEdge::SHAPE_GRID:	// grid
 			color = QColor(255 * (1.0f - graph[*ei]->gridness), 255 * (1.0f - graph[*ei]->gridness), 255);
 			break;
-		case 2:	// radial
+		case RoadEdge::SHAPE_RADIAL:	// radial
 			color = QColor(0, 255, 0);
 			break;
-		case 3: // plaza
+		case RoadEdge::SHAPE_PLAZA: // plaza
 			color = QColor(255, 0, 0);
 			break;
 		default:
@@ -59,7 +64,7 @@ void RoadGraph::generateMesh() {
 		}
 
 		// draw the border of the road segment
-		if ((showHighways && edge->type == 3) || (showAvenues && edge->type == 2) || (showLocalStreets && edge->type == 1)) {
+		if ((showHighways && edge->type == RoadEdge::TYPE_HIGHWAY) || (showBoulevard && edge->type ==  RoadEdge::TYPE_BOULEVARD) || (showAvenues && edge->type ==  RoadEdge::TYPE_AVENUE) || (showLocalStreets && edge->type ==  RoadEdge::TYPE_STREET)) {
 			addMeshFromEdge(renderables[0], edge, widthBase * (1.0f + curbRatio), bColor, 0.0f);
 			addMeshFromEdge(renderables[0], edge, widthBase, color, height);
 		} else {
@@ -80,13 +85,14 @@ void RoadGraph::addMeshFromEdge(RenderablePtr renderable, RoadEdgePtr edge, floa
 	// define the width of the road segment
 	float width;
 	switch (edge->type) {
-	case 3: // high way
+	case RoadEdge::TYPE_HIGHWAY:
 		width = widthBase * 2.0f;
 		break;
-	case 2: // avenue
+	case RoadEdge::TYPE_BOULEVARD:
+	case RoadEdge::TYPE_AVENUE:
 		width = widthBase * 1.5f;
 		break;
-	case 1: // local street
+	case RoadEdge::TYPE_STREET:
 		width = widthBase * 1.0f;
 		break;
 	}
