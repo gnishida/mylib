@@ -51,7 +51,7 @@ void KDEFeature::save(QDomDocument& doc, QDomNode& root) {
 
 	str.setNum(_weight);
 	QDomElement node_feature = doc.createElement("feature");
-	node_feature.setAttribute("type", "generic");
+	node_feature.setAttribute("type", "kde");
 	node_feature.setAttribute("weight", str);
 	root.appendChild(node_feature);
 
