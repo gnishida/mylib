@@ -16,6 +16,24 @@ void KDEFeature::addItem(const KDEFeatureItem &item) {
 }
 
 /**
+ * 与えられたエッジの方向、長さを含むデータを検索し、近いものを返却する。
+ */
+KDEFeatureItem KDEFeature::getItem(const QVector2D &edge) const {
+	float min_dist = std::numeric_limits<float>::max();
+	int id = -1;
+
+	for (int i = 0; i < items.size(); ++i) {
+		float dist = items[i].getMinDistance(edge);
+		if (dist < min_dist) {
+			min_dist = dist;
+			id = i;
+		}
+	}
+
+	return items[id];
+}
+
+/**
  * 与えられたfeatureノード配下のXML情報に基づいて、グリッド特徴量を設定する。
  */
 void KDEFeature::load(QDomNode& node) {

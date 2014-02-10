@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <QVector2D>
 #include <QDomNode>
 
 /**
@@ -10,14 +11,14 @@
 
 class KDEFeatureItem {
 public:
-	std::vector<float> angles;
-	std::vector<float> lengths;
+	std::vector<QVector2D> edges;
 
 public:
 	KDEFeatureItem() {}
 	~KDEFeatureItem() {}
 
-	void addEdge(float angle, float length);
+	void addEdge(const QVector2D &edge);
+	float getMinDistance(const QVector2D &edge) const;
 
 	void load(QDomNode& node);
 	void save(QDomDocument& doc, QDomNode& node);

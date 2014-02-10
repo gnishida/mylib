@@ -17,6 +17,8 @@ public:
 	~KDEFeature() {}
 
 	void addItem(const KDEFeatureItem &item);
+	KDEFeatureItem getItem(const QVector2D &edge) const;
+
 	void load(QDomNode& node);
 	void save(QDomDocument& doc, QDomNode& node);
 };
