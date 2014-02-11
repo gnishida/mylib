@@ -65,7 +65,7 @@ public:
 	static BBox getAABoundingBox(RoadGraph& roads);
 	static BBox getBoudingBox(RoadGraph& roads, float theta1, float theta2, float theta_step = 0.087f);
 	static void extractRoads(RoadGraph& roads, int roadType = 7);
-	static void extractRoads(RoadGraph& roads, Polygon2D& area, bool strict, int roadType = 7);
+	static void extractRoads(RoadGraph& roads, Polygon2D& area, bool strict, int roadType = 0);
 	static void extractRoads2(RoadGraph& roads, Polygon2D& area, int roadType = 7);
 	static void subtractRoads(RoadGraph& roads, Polygon2D& area, bool strict);
 	static void subtractRoads2(RoadGraph& roads, Polygon2D& area);

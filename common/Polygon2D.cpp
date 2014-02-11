@@ -4,6 +4,7 @@
 #include <boost/geometry/multi/multi.hpp>
 #include <boost/polygon/polygon.hpp>
 #include "Polygon2D.h"
+#include "Polyline2D.h"
 #include "Util.h"
 
 void Polygon2D::correct() {

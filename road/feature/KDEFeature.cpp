@@ -11,19 +11,34 @@ KDEFeature::KDEFeature(int group_id) : AbstractFeature() {
 	this->group_id = group_id;
 }
 
-void KDEFeature::setDensity(float density) {
-	_density = density;
+void KDEFeature::setDensity(int roadType, float density) {
+	switch (roadType) {
+	case RoadEdge::TYPE_AVENUE:
+		_avenueDensity = density;
+		break;
+	case RoadEdge::TYPE_STREET:
+		_streetDensity = density;
+		break;
+	}
 }
 
-void KDEFeature::addItem(const KDEFeatureItem &item) {
-	items.push_back(item);
+void KDEFeature::addItem(int roadType, const KDEFeatureItem &item) {
+	switch (roadType) {
+	case RoadEdge::TYPE_AVENUE:
+		avenueItems.push_back(item);
+		break;
+	case RoadEdge::TYPE_STREET:
+		streetItems.push_back(item);
+		break;
+	}
 }
 
 /**
  * 与えられたfeatureノード配下のXML情報に基づいて、グリッド特徴量を設定する。
  */
 void KDEFeature::load(QDomNode& node) {
-	items.clear();
+	avenueItems.clear();
+	streetItems.clear();
 
 	_weight = node.toElement().attribute("weight").toFloat();
 
@@ -40,12 +55,38 @@ void KDEFeature::load(QDomNode& node) {
 
 				child2 = child2.nextSibling();
 			}
-		} else if (child.toElement().tagName() == "density") {
-			_density = child.firstChild().nodeValue().toFloat();
-		} else if (child.toElement().tagName() == "item") {
+		} else if (child.toElement().tagName() == "avenue") {
+			_avenueDensity = child.toElement().attribute("density").toFloat();
+			loadAvenue(child);
+		} else if (child.toElement().tagName() == "street") {
+			_streetDensity = child.toElement().attribute("density").toFloat();
+			loadStreet(child);
+		}
+
+		child = child.nextSibling();
+	}
+}
+
+void KDEFeature::loadAvenue(QDomNode& node) {
+	QDomNode child = node.firstChild();
+	while (!child.isNull()) {
+		if (child.toElement().tagName() == "item") {
 			KDEFeatureItem item;
 			item.load(child);
-			items.push_back(item);
+			avenueItems.push_back(item);
+		}
+
+		child = child.nextSibling();
+	}
+}
+
+void KDEFeature::loadStreet(QDomNode& node) {
+	QDomNode child = node.firstChild();
+	while (!child.isNull()) {
+		if (child.toElement().tagName() == "item") {
+			KDEFeatureItem item;
+			item.load(child);
+			streetItems.push_back(item);
 		}
 
 		child = child.nextSibling();
@@ -79,19 +120,34 @@ void KDEFeature::save(QDomDocument& doc, QDomNode& root) {
 	QDomText node_center_y_value = doc.createTextNode(str);
 	node_center_y.appendChild(node_center_y_value);
 
-	// write density
-	QDomElement node_density = doc.createElement("density");
-	node_feature.appendChild(node_density);
+	// write avenue items
+	str.setNum(_avenueDensity);
+	QDomElement node_avenue = doc.createElement("avenue");
+	node_avenue.setAttribute("density", _avenueDensity);
+	node_feature.appendChild(node_avenue);
 
-	str.setNum(_density);
-	QDomText node_density_value = doc.createTextNode(str);
-	node_density.appendChild(node_density_value);
+	saveAvenue(doc, node_avenue);
 
-	// write items
-	for (int i = 0; i < items.size(); ++i) {
-		// write item node
+	// write street items
+	QDomElement node_street = doc.createElement("street");
+	node_street.setAttribute("density", _streetDensity);
+	node_feature.appendChild(node_street);
+
+	saveStreet(doc, node_street);
+}
+
+void KDEFeature::saveAvenue(QDomDocument& doc, QDomNode& node) {
+	for (int i = 0; i < avenueItems.size(); ++i) {
 		QDomElement node_item = doc.createElement("item");
-		node_feature.appendChild(node_item);
-		items[i].save(doc, node_item);
+		node.appendChild(node_item);
+		avenueItems[i].save(doc, node_item);
+	}
+}
+
+void KDEFeature::saveStreet(QDomDocument& doc, QDomNode& node) {
+	for (int i = 0; i < streetItems.size(); ++i) {
+		QDomElement node_item = doc.createElement("item");
+		node.appendChild(node_item);
+		streetItems[i].save(doc, node_item);
 	}
 }

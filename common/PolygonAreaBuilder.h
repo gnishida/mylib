@@ -3,6 +3,7 @@
 #include <QVector2D>
 #include <common/common.h>
 #include <common/Polygon2D.h>
+#include <common/Polyline2D.h>
 
 class PolygonAreaBuilder {
 private:

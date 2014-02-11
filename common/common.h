@@ -19,8 +19,5 @@
  */
 BOOST_GEOMETRY_REGISTER_POINT_2D_GET_SET(QVector2D, float, boost::geometry::cs::cartesian, x, y, setX, setY)
 
-/**
- * Linestringを定義
- */
-typedef boost::geometry::model::linestring<QVector2D> Polyline2D;
+
 
