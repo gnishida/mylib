@@ -74,9 +74,6 @@ void RoadGraph::generateMesh() {
 		if ((showHighways && edge->type == RoadEdge::TYPE_HIGHWAY) || (showBoulevard && edge->type ==  RoadEdge::TYPE_BOULEVARD) || (showAvenues && edge->type ==  RoadEdge::TYPE_AVENUE) || (showLocalStreets && edge->type ==  RoadEdge::TYPE_STREET)) {
 			addMeshFromEdge(renderables[0], edge, widthBase * (1.0f + curbRatio), bgColor, 0.0f);
 			addMeshFromEdge(renderables[0], edge, widthBase, color, height);
-		} else {
-			// If this is the local street and it should be drawn in gray color, it should be a little narrow line.
-			addMeshFromEdge(renderables[0], edge, widthBase * 0.6f, bgColor, 0.0f);
 		}
 	}
 

@@ -184,7 +184,7 @@ QVector2D Polygon2D::getOBB(Polygon2D &obb) const {
 		float area = rotBBox.area();
 		if (area < minArea) {
 			minArea = area;
-			minSize = minSize;
+			minSize = size;
 			obb = rotBBox;
 		}
 	}
