@@ -64,9 +64,9 @@ public:
 	static void connectRoads(RoadGraph& roads1, RoadGraph& roads2, float connect_threshold);
 	static BBox getAABoundingBox(RoadGraph& roads);
 	static BBox getBoudingBox(RoadGraph& roads, float theta1, float theta2, float theta_step = 0.087f);
-	static void extractRoads(RoadGraph& roads, int roadType = 7);
+	static void extractRoads(RoadGraph& roads, int roadType = 0);
 	static void extractRoads(RoadGraph& roads, Polygon2D& area, bool strict, int roadType = 0);
-	static void extractRoads2(RoadGraph& roads, Polygon2D& area, int roadType = 7);
+	static void extractRoads2(RoadGraph& roads, Polygon2D& area, int roadType = 0);
 	static void subtractRoads(RoadGraph& roads, Polygon2D& area, bool strict);
 	static void subtractRoads2(RoadGraph& roads, Polygon2D& area);
 
@@ -76,6 +76,7 @@ public:
 	static bool isConnected(RoadGraph& roads, RoadVertexDesc desc1, RoadVertexDesc desc2, bool onlyValidEdge = true);
 	static RoadVertexDesc findConnectedNearestNeighbor(RoadGraph* roads, const QVector2D &pt, RoadVertexDesc v);
 	static bool getEdge(RoadGraph& roads, const QVector2D &pt, float threshold, RoadEdgeDesc& e, bool onlyValidEdge = true);
+	static bool getEdge(RoadGraph& roads, const QVector2D &pt, RoadVertexDesc ignore, float threshold, RoadEdgeDesc& e, bool onlyValidEdge = true);
 	static bool getEdge(RoadGraph* roads, RoadVertexDesc v, float threshold, RoadEdgeDesc& e, bool onlyValidEdge = true);
 	static RoadEdgeDesc findNearestEdge(RoadGraph* roads, RoadVertexDesc v, float& dist, QVector2D& closestPt, bool onlyValidEdge = true);
 

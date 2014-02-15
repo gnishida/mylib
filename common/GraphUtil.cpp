@@ -1014,50 +1014,6 @@ void GraphUtil::saveRoads(RoadGraph& roads, const QString& filename) {
 
 /**
  * Copy the road graph.
- * Note: This function does not change neither the vertex desc nor the edge desc.
- */
-/*
-RoadGraph* GraphUtil::copyRoads(RoadGraph& roads, int roadType) {
-	RoadGraph* new_roads = new RoadGraph();
-	
-	QMap<RoadVertexDesc, RoadVertexDesc> conv;
-	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(roads->graph); vi != vend; ++vi) {
-		// Add a vertex
-		RoadVertexPtr new_v = RoadVertexPtr(new RoadVertex(roads->graph[*vi]->getPt()));
-		new_v->valid = roads->graph[*vi]->valid;
-		RoadVertexDesc new_v_desc = boost::add_vertex(new_roads->graph);
-		new_roads->graph[new_v_desc] = new_v;	
-
-		conv[*vi] = new_v_desc;
-	}
-
-	RoadEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::edges(roads->graph); ei != eend; ++ei) {
-		RoadVertexDesc src = boost::source(*ei, roads->graph);
-		RoadVertexDesc tgt = boost::target(*ei, roads->graph);
-
-		RoadVertexDesc new_src = conv[src];
-		RoadVertexDesc new_tgt = conv[tgt];
-
-		// Add an edge
-		RoadEdgePtr new_e = RoadEdgePtr(new RoadEdge(*roads->graph[*ei]));
-		std::pair<RoadEdgeDesc, bool> edge_pair = boost::add_edge(new_src, new_tgt, new_roads->graph);
-		new_roads->graph[edge_pair.first] = new_e;
-	}
-
-	if (roadType != 7) {
-		extractRoads(new_roads, roadType);
-	}
-
-	new_roads->setModified();
-
-	return new_roads;
-}
-*/
-
-/**
- * Copy the road graph.
  * Note: This function copies all the vertices and edges including the invalid ones. Thus, their IDs will be preserved.
  */
 void GraphUtil::copyRoads(RoadGraph& srcRoads, RoadGraph& dstRoads) {
@@ -1239,13 +1195,13 @@ BBox GraphUtil::getBoudingBox(RoadGraph& roads, float theta1, float theta2, floa
  * Note that this function does not change neither the vertex desc nor the edge desc.
  */
 void GraphUtil::extractRoads(RoadGraph& roads, int roadType) {
-	if (roadType == 7) return;
+	if (roadType == 0) return;
 
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
 		if (!roads.graph[*ei]->valid) continue;
 
-		if (isRoadTypeMatched(roads.graph[*ei]->type, roadType)) {
+		if (!isRoadTypeMatched(roads.graph[*ei]->type, roadType)) {
 			roads.graph[*ei]->valid = false;
 		}
 	}
@@ -1612,6 +1568,40 @@ bool GraphUtil::getEdge(RoadGraph &roads, const QVector2D &pt, float threshold, 
 
 		if (onlyValidEdge && !src->valid) continue;
 		if (onlyValidEdge && !tgt->valid) continue;
+
+		QVector2D pt2;
+		for (int i = 0; i < roads.graph[*ei]->polyLine.size() - 1; i++) {
+			float dist = Util::pointSegmentDistanceXY(roads.graph[*ei]->polyLine[i], roads.graph[*ei]->polyLine[i + 1], pt, pt2);
+			if (dist < min_dist) {
+				min_dist = dist;
+				e = *ei;
+			}
+		}
+	}
+
+	if (min_dist < threshold) return true;
+	else return false;
+}
+
+/**
+ * 指定された点に近いエッジを探す。ただし、指定された頂点から出るエッジは検索対象外とする。
+ */
+bool GraphUtil::getEdge(RoadGraph& roads, const QVector2D &pt, RoadVertexDesc ignore, float threshold, RoadEdgeDesc& e, bool onlyValidEdge) {
+	float min_dist = std::numeric_limits<float>::max();
+	RoadEdgeDesc min_e;
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
+		if (onlyValidEdge && !roads.graph[*ei]->valid) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads.graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+
+		if (onlyValidEdge && !roads.graph[src]->valid) continue;
+		if (onlyValidEdge && !roads.graph[tgt]->valid) continue;
+
+		// 検索対象外のエッジなら、スキップ
+		if (src == ignore || tgt == ignore) continue;
 
 		QVector2D pt2;
 		for (int i = 0; i < roads.graph[*ei]->polyLine.size() - 1; i++) {

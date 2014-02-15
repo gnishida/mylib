@@ -12,8 +12,8 @@ public:
 	int group_id;
 	float _avenueDensity;						// how many vertices in 1km x 1km area
 	float _streetDensity;						// how many vertices in 1km x 1km area
-	std::vector<KDEFeatureItem> avenueItems;
-	std::vector<KDEFeatureItem> streetItems;
+	std::vector<KDEFeatureItem> _avenueItems;
+	std::vector<KDEFeatureItem> _streetItems;
 
 public:
 	KDEFeature();
@@ -22,6 +22,8 @@ public:
 
 	void setDensity(int roadType, float density);
 	void addItem(int roadType, const KDEFeatureItem &item);
+
+	const std::vector<KDEFeatureItem>& items(int roadType) const;
 
 	void load(QDomNode& node);
 	void loadAvenue(QDomNode& node);

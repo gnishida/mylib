@@ -25,11 +25,22 @@ void KDEFeature::setDensity(int roadType, float density) {
 void KDEFeature::addItem(int roadType, const KDEFeatureItem &item) {
 	switch (roadType) {
 	case RoadEdge::TYPE_AVENUE:
-		avenueItems.push_back(item);
+		_avenueItems.push_back(item);
 		break;
 	case RoadEdge::TYPE_STREET:
-		streetItems.push_back(item);
+		_streetItems.push_back(item);
 		break;
+	}
+}
+
+const std::vector<KDEFeatureItem>& KDEFeature::items(int roadType) const {
+	switch (roadType) {
+	case RoadEdge::TYPE_AVENUE:
+		return _avenueItems;
+	case RoadEdge::TYPE_STREET:
+		return _streetItems;
+	default:
+		return _streetItems;
 	}
 }
 
@@ -37,8 +48,8 @@ void KDEFeature::addItem(int roadType, const KDEFeatureItem &item) {
  * 与えられたfeatureノード配下のXML情報に基づいて、グリッド特徴量を設定する。
  */
 void KDEFeature::load(QDomNode& node) {
-	avenueItems.clear();
-	streetItems.clear();
+	_avenueItems.clear();
+	_streetItems.clear();
 
 	_weight = node.toElement().attribute("weight").toFloat();
 
@@ -73,7 +84,7 @@ void KDEFeature::loadAvenue(QDomNode& node) {
 		if (child.toElement().tagName() == "item") {
 			KDEFeatureItem item;
 			item.load(child);
-			avenueItems.push_back(item);
+			_avenueItems.push_back(item);
 		}
 
 		child = child.nextSibling();
@@ -86,7 +97,7 @@ void KDEFeature::loadStreet(QDomNode& node) {
 		if (child.toElement().tagName() == "item") {
 			KDEFeatureItem item;
 			item.load(child);
-			streetItems.push_back(item);
+			_streetItems.push_back(item);
 		}
 
 		child = child.nextSibling();
@@ -137,17 +148,17 @@ void KDEFeature::save(QDomDocument& doc, QDomNode& root) {
 }
 
 void KDEFeature::saveAvenue(QDomDocument& doc, QDomNode& node) {
-	for (int i = 0; i < avenueItems.size(); ++i) {
+	for (int i = 0; i < _avenueItems.size(); ++i) {
 		QDomElement node_item = doc.createElement("item");
 		node.appendChild(node_item);
-		avenueItems[i].save(doc, node_item);
+		_avenueItems[i].save(doc, node_item);
 	}
 }
 
 void KDEFeature::saveStreet(QDomDocument& doc, QDomNode& node) {
-	for (int i = 0; i < streetItems.size(); ++i) {
+	for (int i = 0; i < _streetItems.size(); ++i) {
 		QDomElement node_item = doc.createElement("item");
 		node.appendChild(node_item);
-		streetItems[i].save(doc, node_item);
+		_streetItems[i].save(doc, node_item);
 	}
 }

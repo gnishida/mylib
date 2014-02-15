@@ -4,6 +4,7 @@
 #include "GenericFeature.h"
 #include "../../common/common.h"
 #include "../../common/Util.h"
+#include "../../common/RoadEdge.h"
 
 GenericFeature::GenericFeature() : AbstractFeature() {
 	_type = TYPE_GENERIC;
@@ -26,7 +27,7 @@ GenericFeature::GenericFeature(int group_id) {
 }
 
 void GenericFeature::addEdge(float length, int roadType) {
-	if (roadType == 1) {
+	if (roadType == RoadEdge::TYPE_STREET) {
 		streetLengths[(int)(length / 20) * 20 + 10] += 1;
 		accmStreetLenCount++;
 	} else {
@@ -38,7 +39,7 @@ void GenericFeature::addEdge(float length, int roadType) {
 }
 
 void GenericFeature::addNumDiretions(int numDirections, int roadType) {
-	if (roadType == 1) {
+	if (roadType == RoadEdge::TYPE_STREET) {
 		streetNumDirections[numDirections] += 1;
 		accmStreetDirCount++;
 	} else {
@@ -166,7 +167,7 @@ std::vector<float> GenericFeature::getLengths(int roadType, int num) const {
  * 与えられたuniform random numberに基づいて、エッジの長さを生成する。
  */
 float GenericFeature::generateLength(int roadType, float uniform_random_number) const {
-	if (roadType == 1) {
+	if (roadType == RoadEdge::TYPE_STREET) {
 		for (QMap<float, float>::iterator it = streetLengths.begin(); it != streetLengths.end(); ++it) {
 			if (uniform_random_number <= streetLengths[it.key()]) return it.key();
 		}
