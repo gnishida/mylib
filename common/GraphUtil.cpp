@@ -839,8 +839,8 @@ void GraphUtil::realize(RoadGraph& roads) {
 /**
  * Make the edge finer by inserting more points along the polyline.
  */
-std::vector<QVector2D> GraphUtil::finerEdge(RoadGraph& roads, RoadEdgeDesc e, float step) {
-	std::vector<QVector2D> polyLine;
+Polyline2D GraphUtil::finerEdge(RoadGraph& roads, RoadEdgeDesc e, float step) {
+	Polyline2D polyLine;
 
 	for (int i = 0; i < roads.graph[e]->polyLine.size() - 1; i++) {
 		QVector2D vec = roads.graph[e]->polyLine[i + 1] - roads.graph[e]->polyLine[i];
@@ -852,6 +852,22 @@ std::vector<QVector2D> GraphUtil::finerEdge(RoadGraph& roads, RoadEdgeDesc e, fl
 	polyLine.push_back(roads.graph[e]->polyLine[roads.graph[e]->polyLine.size() - 1]);
 
 	return polyLine;
+}
+
+/**
+ * 指定された点から、指定されたエッジへの距離を返却する。
+ */
+float GraphUtil::distance(RoadGraph& roads, const QVector2D& pt, RoadEdgeDesc e) {
+	float min_dist = std::numeric_limits<float>::max();
+
+	for (int i = 0; i < roads.graph[e]->polyLine.size() - 1; ++i) {
+		float dist = Util::pointSegmentDistanceXY(roads.graph[e]->polyLine[i], roads.graph[e]->polyLine[i + 1], pt);
+		if (dist < min_dist) {
+			min_dist = dist;
+		}
+	}
+
+	return min_dist;
 }
 
 /**

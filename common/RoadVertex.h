@@ -8,7 +8,8 @@ class RoadVertex {
 public:
 	QVector2D pt;
 	bool valid;
-	bool virt;
+	//bool virt;
+	bool seed;
 
 	bool onBoundary;
 	std::vector<float> angles;

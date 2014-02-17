@@ -45,5 +45,9 @@ public:
 
 		return ret;
 	}
+
+	size_t size() const {
+		return data.size();
+	}
 };
 

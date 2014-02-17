@@ -24,6 +24,7 @@ public:
 	void addItem(int roadType, const KDEFeatureItem &item);
 
 	const std::vector<KDEFeatureItem>& items(int roadType) const;
+	const float density(int roadType) const;
 
 	void load(QDomNode& node);
 	void loadAvenue(QDomNode& node);

@@ -44,6 +44,17 @@ const std::vector<KDEFeatureItem>& KDEFeature::items(int roadType) const {
 	}
 }
 
+const float KDEFeature::density(int roadType) const {
+	switch (roadType) {
+	case RoadEdge::TYPE_AVENUE:
+		return _avenueDensity;
+	case RoadEdge::TYPE_STREET:
+		return _streetDensity;
+	default:
+		return _streetDensity;
+	}
+}
+
 /**
  * 与えられたfeatureノード配下のXML情報に基づいて、グリッド特徴量を設定する。
  */

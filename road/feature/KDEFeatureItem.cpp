@@ -10,12 +10,15 @@ void KDEFeatureItem::addEdge(const Polyline2D &polyline, bool deadend) {
 
 /**
  * 与えられた方向・長さに最も近い距離を返却する。
+ * edges[i]は、頂点自身の座標である(0, 0)を含まず、次の点の座標から始まる。しかも、各点の座標は、頂点自身の座標からの相対座標である。
+ * 一方、polylineには、頂点自身の座標から始まる、各点の絶対座標が入っている。
+ * したがって、polylineに対しては、polyline[0]を引いて相対座標にしてやる必要がある。
  */
 float KDEFeatureItem::getMinDistance(const Polyline2D &polyline) const {
 	float min_dist2 = std::numeric_limits<float>::max();
 
 	for (int i = 0; i < edges.size(); ++i) {
-		QVector2D dir1 = edges[i][edges[i].size() - 1] - edges[i][0];
+		QVector2D dir1 = edges[i][edges[i].size() - 1];
 		QVector2D dir2 = polyline[polyline.size() - 1] - polyline[0];
 
 		float dist2 = (dir1 - dir2).lengthSquared();

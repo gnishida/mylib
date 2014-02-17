@@ -49,7 +49,8 @@ public:
 	~RoadGraph();
 
 	void generateMesh();
-	void RoadGraph::addMeshFromEdge(RenderablePtr renderable, RoadEdgePtr edge, float widthBase, QColor color, float height);
+	void addMeshFromEdge(RenderablePtr renderable, RoadEdgePtr edge, float widthBase, QColor color, float height);
+	void addMeshFromVertex(RenderablePtr renderable, RoadVertexPtr vertex, QColor color, float height);
 
 	bool getModified();
 	void setModified();

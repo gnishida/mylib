@@ -21,6 +21,7 @@ void RoadGraph::generateMesh() {
 	renderables.clear();
 
 	renderables.push_back(RenderablePtr(new Renderable(GL_TRIANGLES)));
+	renderables.push_back(RenderablePtr(new Renderable(GL_POINTS, 10.0f)));
 
 	// road edge
 	RoadEdgeIter ei, eend;
@@ -74,6 +75,16 @@ void RoadGraph::generateMesh() {
 		if ((showHighways && edge->type == RoadEdge::TYPE_HIGHWAY) || (showBoulevard && edge->type ==  RoadEdge::TYPE_BOULEVARD) || (showAvenues && edge->type ==  RoadEdge::TYPE_AVENUE) || (showLocalStreets && edge->type ==  RoadEdge::TYPE_STREET)) {
 			addMeshFromEdge(renderables[0], edge, widthBase * (1.0f + curbRatio), bgColor, 0.0f);
 			addMeshFromEdge(renderables[0], edge, widthBase, color, height);
+		}
+	}
+
+	// road vertex
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(graph); vi != vend; ++vi) {
+		if (!graph[*vi]->valid) continue;
+
+		if (graph[*vi]->seed) {
+			addMeshFromVertex(renderables[1], graph[*vi], QColor(0, 0, 255), 2.0f);
 		}
 	}
 
@@ -150,6 +161,28 @@ void RoadGraph::addMeshFromEdge(RenderablePtr renderable, RoadEdgePtr edge, floa
 		v.location[1] = p3.y();
 		renderable->vertices.push_back(v);
 	}
+}
+
+/**
+ * Add a mesh for the specified edge.
+ */
+void RoadGraph::addMeshFromVertex(RenderablePtr renderable, RoadVertexPtr vertex, QColor color, float height) {
+	Vertex v;
+
+	// draw the vertex
+	v.color[0] = color.redF();
+	v.color[1] = color.greenF();
+	v.color[2] = color.blueF();
+	v.color[3] = color.alphaF();
+	v.normal[0] = 0.0f;
+	v.normal[1] = 0.0f;
+	v.normal[2] = 1.0f;
+
+	v.location[0] = vertex->pt.x();
+	v.location[1] = vertex->pt.y();
+	v.location[2] = height;
+
+	renderable->vertices.push_back(v);
 }
 
 bool RoadGraph::getModified() {
