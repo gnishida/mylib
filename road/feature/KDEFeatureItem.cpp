@@ -76,10 +76,8 @@ void KDEFeatureItem::save(QDomDocument& doc, QDomNode& node) {
 		for (int j = 0; j < edges[i].size(); ++j) {
 			QDomElement node_point = doc.createElement("point");
 
-			str.setNum(edges[i][j].x());
-			node_point.setAttribute("x", str);
-			str.setNum(edges[i][j].y());
-			node_point.setAttribute("y", str);
+			node_point.setAttribute("x", edges[i][j].x());
+			node_point.setAttribute("y", edges[i][j].y());
 
 			node_edge.appendChild(node_point);
 		}

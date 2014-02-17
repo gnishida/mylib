@@ -827,6 +827,16 @@ void GraphUtil::removeShortEdges(RoadGraph& roads, float threshold) {
 }
 
 /**
+ * Remove the link edges.
+ */
+void GraphUtil::removeLinkEdges(RoadGraph& roads) {
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
+		if (roads.graph[*ei]->link) roads.graph[*ei]->valid = false;
+	}
+}
+
+/**
  * Make the road graph realistic.
  * 1) remove isolated vertices.
  * 2) remove isolated edges.

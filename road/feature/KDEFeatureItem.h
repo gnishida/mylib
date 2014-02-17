@@ -12,6 +12,7 @@
 
 class KDEFeatureItem {
 public:
+	QVector2D pt;
 	std::vector<Polyline2D> edges;
 	std::vector<bool> deadends;
 

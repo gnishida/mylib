@@ -94,6 +94,7 @@ void KDEFeature::loadAvenue(QDomNode& node) {
 	while (!child.isNull()) {
 		if (child.toElement().tagName() == "item") {
 			KDEFeatureItem item;
+			item.pt = QVector2D(child.toElement().attribute("x").toFloat(), child.toElement().attribute("y").toFloat());
 			item.load(child);
 			_avenueItems.push_back(item);
 		}
@@ -107,6 +108,7 @@ void KDEFeature::loadStreet(QDomNode& node) {
 	while (!child.isNull()) {
 		if (child.toElement().tagName() == "item") {
 			KDEFeatureItem item;
+			item.pt = QVector2D(child.toElement().attribute("x").toFloat(), child.toElement().attribute("y").toFloat());
 			item.load(child);
 			_streetItems.push_back(item);
 		}
@@ -118,10 +120,9 @@ void KDEFeature::loadStreet(QDomNode& node) {
 void KDEFeature::save(QDomDocument& doc, QDomNode& root) {
 	QString str;
 
-	str.setNum(_weight);
 	QDomElement node_feature = doc.createElement("feature");
 	node_feature.setAttribute("type", "kde");
-	node_feature.setAttribute("weight", str);
+	node_feature.setAttribute("weight", _weight);
 	root.appendChild(node_feature);
 
 	// write center node
@@ -161,6 +162,8 @@ void KDEFeature::save(QDomDocument& doc, QDomNode& root) {
 void KDEFeature::saveAvenue(QDomDocument& doc, QDomNode& node) {
 	for (int i = 0; i < _avenueItems.size(); ++i) {
 		QDomElement node_item = doc.createElement("item");
+		node_item.setAttribute("x", _avenueItems[i].pt.x());
+		node_item.setAttribute("y", _avenueItems[i].pt.y());
 		node.appendChild(node_item);
 		_avenueItems[i].save(doc, node_item);
 	}
@@ -169,6 +172,8 @@ void KDEFeature::saveAvenue(QDomDocument& doc, QDomNode& node) {
 void KDEFeature::saveStreet(QDomDocument& doc, QDomNode& node) {
 	for (int i = 0; i < _streetItems.size(); ++i) {
 		QDomElement node_item = doc.createElement("item");
+		node_item.setAttribute("x", _streetItems[i].pt.x());
+		node_item.setAttribute("y", _streetItems[i].pt.y());
 		node.appendChild(node_item);
 		_streetItems[i].save(doc, node_item);
 	}

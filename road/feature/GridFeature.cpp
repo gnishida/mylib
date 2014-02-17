@@ -278,10 +278,9 @@ void GridFeature::save(QString filename) {
 void GridFeature::save(QDomDocument& doc, QDomNode& root) {
 	QString str;
 
-	str.setNum(_weight);
 	QDomElement node_feature = doc.createElement("feature");
 	node_feature.setAttribute("type", "grid");
-	node_feature.setAttribute("weight", str);
+	node_feature.setAttribute("weight", _weight);
 	root.appendChild(node_feature);
 
 	// write center node
@@ -324,11 +323,10 @@ void GridFeature::save(QDomDocument& doc, QDomNode& root) {
 
 	for (QMap<float, float>::iterator it = length1.begin(); it != length1.end(); ++it) {
 		QDomElement node_length1_data = doc.createElement("data");
-		QString str;
-		str.setNum(it.key());
-		node_length1_data.setAttribute("key", str);
+		node_length1_data.setAttribute("key", it.key());
 		node_length1.appendChild(node_length1_data);
 
+		QString str;
 		str.setNum(it.value());
 		QDomText node_length1_value = doc.createTextNode(str);
 		node_length1_data.appendChild(node_length1_value);
@@ -340,11 +338,10 @@ void GridFeature::save(QDomDocument& doc, QDomNode& root) {
 
 	for (QMap<float, float>::iterator it = length2.begin(); it != length2.end(); ++it) {
 		QDomElement node_length2_data = doc.createElement("data");
-		QString str;
-		str.setNum(it.key());
-		node_length2_data.setAttribute("key", str);
+		node_length2_data.setAttribute("key", it.key());
 		node_length2.appendChild(node_length2_data);
 
+		QString str;
 		str.setNum(it.value());
 		QDomText node_length2_value = doc.createTextNode(str);
 		node_length2_data.appendChild(node_length2_value);

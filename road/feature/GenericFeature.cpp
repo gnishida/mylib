@@ -335,10 +335,9 @@ void GenericFeature::save(QString filename) {
 void GenericFeature::save(QDomDocument& doc, QDomNode& root) {
 	QString str;
 
-	str.setNum(_weight);
 	QDomElement node_feature = doc.createElement("feature");
 	node_feature.setAttribute("type", "generic");
-	node_feature.setAttribute("weight", str);
+	node_feature.setAttribute("weight", _weight);
 	root.appendChild(node_feature);
 
 	// write center node
@@ -377,11 +376,10 @@ void GenericFeature::saveAvenue(QDomDocument& doc, QDomNode& node) {
 
 	for (QMap<float, float>::iterator it = avenueLengths.begin(); it != avenueLengths.end(); ++it) {
 		QDomElement node_length_data = doc.createElement("data");
-		QString str;
-		str.setNum(it.key());
-		node_length_data.setAttribute("key", str);
+		node_length_data.setAttribute("key", it.key());
 		node_length.appendChild(node_length_data);
 
+		QString str;
 		str.setNum(it.value());
 		QDomText node_length_value = doc.createTextNode(str);
 		node_length_data.appendChild(node_length_value);
@@ -393,11 +391,10 @@ void GenericFeature::saveAvenue(QDomDocument& doc, QDomNode& node) {
 
 	for (QMap<int, float>::iterator it = avenueNumDirections.begin(); it != avenueNumDirections.end(); ++it) {
 		QDomElement node_numDirections_data = doc.createElement("data");
-		QString str;
-		str.setNum(it.key());
-		node_numDirections_data.setAttribute("key", str);
+		node_numDirections_data.setAttribute("key", it.key());
 		node_numDirections.appendChild(node_numDirections_data);
 
+		QString str;
 		str.setNum(it.value());
 		QDomText node_numDirections_value = doc.createTextNode(str);
 		node_numDirections_data.appendChild(node_numDirections_value);
@@ -411,11 +408,10 @@ void GenericFeature::saveStreet(QDomDocument& doc, QDomNode& node) {
 
 	for (QMap<float, float>::iterator it = streetLengths.begin(); it != streetLengths.end(); ++it) {
 		QDomElement node_length_data = doc.createElement("data");
-		QString str;
-		str.setNum(it.key());
-		node_length_data.setAttribute("key", str);
+		node_length_data.setAttribute("key", it.key());
 		node_length.appendChild(node_length_data);
 
+		QString str;
 		str.setNum(it.value());
 		QDomText node_length_value = doc.createTextNode(str);
 		node_length_data.appendChild(node_length_value);
@@ -427,11 +423,10 @@ void GenericFeature::saveStreet(QDomDocument& doc, QDomNode& node) {
 
 	for (QMap<int, float>::iterator it = streetNumDirections.begin(); it != streetNumDirections.end(); ++it) {
 		QDomElement node_numDirections_data = doc.createElement("data");
-		QString str;
-		str.setNum(it.key());
-		node_numDirections_data.setAttribute("key", str);
+		node_numDirections_data.setAttribute("key", it.key());
 		node_numDirections.appendChild(node_numDirections_data);
 
+		QString str;
 		str.setNum(it.value());
 		QDomText node_numDirections_value = doc.createTextNode(str);
 		node_numDirections_data.appendChild(node_numDirections_value);

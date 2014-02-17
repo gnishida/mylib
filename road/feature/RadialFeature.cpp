@@ -75,10 +75,9 @@ void RadialFeature::save(QString filename) {
 void RadialFeature::save(QDomDocument& doc, QDomNode& root) {
 	QString str;
 
-	str.setNum(_weight);
 	QDomElement node_feature = doc.createElement("feature");
 	node_feature.setAttribute("type", "radial");
-	node_feature.setAttribute("weight", str);
+	node_feature.setAttribute("weight", _weight);
 	root.appendChild(node_feature);
 
 	// write radius node

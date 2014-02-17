@@ -15,7 +15,7 @@ public:
 	TopNSearch() {}
 	~TopNSearch() {}
 
-	void add(qreal key, T value) {
+	void add(qreal key, const T value) {
 		data.insert(key, value);
 	}
 
