@@ -3,17 +3,19 @@
 #include <vector>
 #include <QVector2D>
 #include <boost/shared_ptr.hpp>
+#include "../road/feature/KDEFeatureItem.h"
 
 class RoadVertex {
 public:
 	QVector2D pt;
 	bool valid;
-	//bool virt;
 	bool seed;
 
 	bool onBoundary;
 	std::vector<float> angles;
 	std::vector<float> lengths;
+
+	KDEFeatureItem kernel;
 
 public:
 	RoadVertex();

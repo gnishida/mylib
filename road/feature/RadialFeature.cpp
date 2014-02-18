@@ -43,7 +43,11 @@ void RadialFeature::load(QDomNode& node) {
 
 	QDomNode child = node.firstChild();
 	while (!child.isNull()) {
-		if (child.toElement().tagName() == "radius") {
+		if (child.toElement().tagName() == "center") {
+			loadCenter(child);
+		} else if (child.toElement().tagName() == "area") {
+			loadArea(child);
+		} else if (child.toElement().tagName() == "radius") {
 			radii.push_back(child.firstChild().nodeValue().toFloat());
 		} else if (child.toElement().tagName() == "directions") {
 			numDirections = child.firstChild().nodeValue().toInt();
@@ -79,6 +83,12 @@ void RadialFeature::save(QDomDocument& doc, QDomNode& root) {
 	node_feature.setAttribute("type", "radial");
 	node_feature.setAttribute("weight", _weight);
 	root.appendChild(node_feature);
+
+	// write center node
+	saveCenter(doc, node_feature);
+
+	// write area node
+	saveArea(doc, node_feature);
 
 	// write radius node
 	for (int i = 0; i < radii.size(); ++i) {

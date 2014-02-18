@@ -4,8 +4,7 @@
 #include "KDEFeatureItem.h"
 
 void KDEFeatureItem::addEdge(const Polyline2D &polyline, bool deadend) {
-	edges.push_back(polyline);
-	deadends.push_back(deadend);
+	edges.push_back(KDEFeatureItemEdge(polyline, deadend));
 }
 
 /**
@@ -18,7 +17,7 @@ float KDEFeatureItem::getMinDistance(const Polyline2D &polyline) const {
 	float min_dist2 = std::numeric_limits<float>::max();
 
 	for (int i = 0; i < edges.size(); ++i) {
-		QVector2D dir1 = edges[i][edges[i].size() - 1];
+		QVector2D dir1 = edges[i].edge[edges[i].edge.size() - 1];
 		QVector2D dir2 = polyline[polyline.size() - 1] - polyline[0];
 
 		float dist2 = (dir1 - dir2).lengthSquared();
@@ -49,13 +48,7 @@ void KDEFeatureItem::load(QDomNode& node) {
 				child2 = child2.nextSibling();
 			}
 
-			edges.push_back(polyline);
-
-			if (child.toElement().attribute("deadend") == "true") {
-				deadends.push_back(true);
-			} else {
-				deadends.push_back(false);
-			}
+			edges.push_back(KDEFeatureItemEdge(polyline, child.toElement().attribute("deadend") == "true"));
 		}
 
 		child = child.nextSibling();
@@ -67,17 +60,17 @@ void KDEFeatureItem::save(QDomDocument& doc, QDomNode& node) {
 		QDomElement node_edge = doc.createElement("edge");
 
 		QString str;
-		if (deadends[i]) {
+		if (edges[i].deadend) {
 			node_edge.setAttribute("deadend", "true");
 		} else {
 			node_edge.setAttribute("deadend", "false");
 		}
 
-		for (int j = 0; j < edges[i].size(); ++j) {
+		for (int j = 0; j < edges[i].edge.size(); ++j) {
 			QDomElement node_point = doc.createElement("point");
 
-			node_point.setAttribute("x", edges[i][j].x());
-			node_point.setAttribute("y", edges[i][j].y());
+			node_point.setAttribute("x", edges[i].edge[j].x());
+			node_point.setAttribute("y", edges[i].edge[j].y());
 
 			node_edge.appendChild(node_point);
 		}

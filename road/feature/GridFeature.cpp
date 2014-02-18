@@ -218,16 +218,9 @@ void GridFeature::load(QDomNode& node) {
 	QDomNode child = node.firstChild();
 	while (!child.isNull()) {
 		if (child.toElement().tagName() == "center") {
-			QDomNode child2 = child.firstChild();
-			while (!child2.isNull()) {
-				if (child2.toElement().tagName() == "x") {
-					_center.setX(child2.firstChild().nodeValue().toFloat());
-				} else if (child2.toElement().tagName() == "y") {
-					_center.setY(child2.firstChild().nodeValue().toFloat());
-				}
-
-				child2 = child2.nextSibling();
-			}
+			loadCenter(child);
+		} else if (child.toElement().tagName() == "area") {
+			loadArea(child);
 		} else if (child.toElement().tagName() == "angle1") {
 			angle1 = child.firstChild().nodeValue().toFloat();
 		} else if (child.toElement().tagName() == "angle2") {
@@ -284,22 +277,10 @@ void GridFeature::save(QDomDocument& doc, QDomNode& root) {
 	root.appendChild(node_feature);
 
 	// write center node
-	QDomElement node_center = doc.createElement("center");
-	node_feature.appendChild(node_center);
+	saveCenter(doc, node_feature);
 
-	QDomElement node_center_x = doc.createElement("x");
-	node_center.appendChild(node_center_x);
-
-	str.setNum(_center.x());
-	QDomText node_center_x_value = doc.createTextNode(str);
-	node_center_x.appendChild(node_center_x_value);
-
-	QDomElement node_center_y = doc.createElement("y");
-	node_center.appendChild(node_center_y);
-
-	str.setNum(_center.y());
-	QDomText node_center_y_value = doc.createTextNode(str);
-	node_center_y.appendChild(node_center_y_value);
+	// write area node
+	saveArea(doc, node_feature);
 	
 	// write angle1 node
 	QDomElement node_angle1 = doc.createElement("angle1");

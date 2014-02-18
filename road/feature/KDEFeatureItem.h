@@ -3,6 +3,7 @@
 #include <QVector2D>
 #include <QDomNode>
 #include "../../common/Polyline2D.h"
+#include "KDEFeatureItemEdge.h"
 
 /**
  * １つの頂点から出るエッジの特徴を表すクラス。
@@ -13,8 +14,7 @@
 class KDEFeatureItem {
 public:
 	QVector2D pt;
-	std::vector<Polyline2D> edges;
-	std::vector<bool> deadends;
+	std::vector<KDEFeatureItemEdge> edges;
 
 public:
 	KDEFeatureItem() {}
