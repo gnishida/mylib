@@ -3,8 +3,8 @@
 #include <vector>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include "BBox.h"
-#include "Polygon2D.h"
+#include "../common/BBox.h"
+#include "../common/Polygon2D.h"
 #include "RoadGraph.h"
 
 class GraphUtil {

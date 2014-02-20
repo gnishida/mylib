@@ -11,7 +11,7 @@
 #include <boost/shared_ptr.hpp>
 #include "RoadVertex.h"
 #include "RoadEdge.h"
-#include "Renderable.h"
+#include "../common/Renderable.h"
 
 using namespace boost;
 

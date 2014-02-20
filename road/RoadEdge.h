@@ -4,7 +4,7 @@
 #include <Qvector2D>
 #include <QColor>
 #include <boost/shared_ptr.hpp>
-#include "Polyline2D.h"
+#include "../common/Polyline2D.h"
 
 class RoadEdge {
 public:

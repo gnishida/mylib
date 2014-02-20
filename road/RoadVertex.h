@@ -3,7 +3,7 @@
 #include <vector>
 #include <QVector2D>
 #include <boost/shared_ptr.hpp>
-#include "../road/feature/KDEFeatureItem.h"
+#include "feature/KDEFeatureItem.h"
 
 class RoadVertex {
 public:

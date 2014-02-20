@@ -4,7 +4,7 @@
 #include "GenericFeature.h"
 #include "../../common/common.h"
 #include "../../common/Util.h"
-#include "../../common/RoadEdge.h"
+#include "../RoadEdge.h"
 
 GenericFeature::GenericFeature() : AbstractFeature() {
 	_type = TYPE_GENERIC;

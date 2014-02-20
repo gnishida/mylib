@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Polygon2D.h"
+#include "../common/Polygon2D.h"
+#include "../common/Renderable.h"
 #include "RoadGraph.h"
-#include "Renderable.h"
 
 class RoadGraphRenderer {
 public:

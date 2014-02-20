@@ -5,8 +5,8 @@
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/linestring.hpp>
-#include "common.h"
-#include "Util.h"
+#include "../common/common.h"
+#include "../common/Util.h"
 #include "GraphUtil.h"
 
 /**
