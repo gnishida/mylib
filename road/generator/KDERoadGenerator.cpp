@@ -347,60 +347,6 @@ bool KDERoadGenerator::growRoadSegment(RoadGraph &roads, Polygon2D &area, RoadVe
 		GraphUtil::snapVertex(roads, tgtDesc, snapDesc);
 	}
 
-	// snapもintersecteもoutsideもしなかった頂点について、
-	// エッジをもう少し延ばしたら、他のエッジや頂点にぶつかる場合、snapさせる
-	/*
-	if (!snapped && !intersected && !outside) {
-		pt = roads.graph[srcDesc]->pt + (roads.graph[tgtDesc]->pt - roads.graph[srcDesc]->pt) * 1.5f;
-
-		QVector2D intPoint;
-		RoadEdgeDesc closestEdge;
-		intersected = intersects(roads, roads.graph[srcDesc]->pt, pt, closestEdge, intPoint);
-		if (intersected) {
-			RoadVertexDesc src = boost::source(closestEdge, roads.graph);
-			RoadVertexDesc tgt = boost::target(closestEdge, roads.graph);
-
-			pt = intPoint;
-
-			intersected = true;
-		}
-
-		float threshold;
-		if (roadType == RoadEdge::TYPE_STREET) {
-			threshold = std::min(0.25f * roads.graph[e]->getLength(), 10.0f);
-		} else {
-			threshold = std::min(0.5f * roads.graph[e]->getLength(), 40.0f);
-		}
-
-		// 近くに頂点やエッジがあるか？
-		RoadVertexDesc desc;
-		RoadEdgeDesc e_desc;
-		QVector2D closestPt;		
-		if (canSnapToVertex(roads, pt, threshold, srcDesc, desc)) {
-			GraphUtil::snapVertex(roads, tgtDesc, desc);
-			return true;
-		} else if (canSnapToEdge(roads, pt, threshold, srcDesc, e_desc, closestPt)) {
-			// 実験。既存のエッジを分割させないよう、キャンセルさせてみる
-			if (roads.graph[e_desc]->type == roadType) {
-				roads.graph[e]->valid = false;
-				roads.graph[tgtDesc]->valid = false;
-				return false;
-			}
-
-			snapDesc = GraphUtil::splitEdge(roads, e_desc, pt);
-			snapped = true;
-			intersected = false;
-		} else {
-			if (!area.contains(pt)) {
-				// エリア外周との交点を求める
-				area.intersects(roads.graph[srcDesc]->pt, pt, pt);
-				GraphUtil::moveVertex(roads, tgtDesc, pt);
-				return true;
-			}
-		}
-	}
-	*/
-
 	// シードに追加
 	if (!snapped && !intersected && !outside && !edge.deadend) {
 		seeds.push_back(tgtDesc);
