@@ -867,13 +867,15 @@ Polyline2D GraphUtil::finerEdge(RoadGraph& roads, RoadEdgeDesc e, float step) {
 /**
  * 指定された点から、指定されたエッジへの距離を返却する。
  */
-float GraphUtil::distance(RoadGraph& roads, const QVector2D& pt, RoadEdgeDesc e) {
+float GraphUtil::distance(RoadGraph& roads, const QVector2D& pt, RoadEdgeDesc e, QVector2D &closestPt) {
 	float min_dist = std::numeric_limits<float>::max();
 
 	for (int i = 0; i < roads.graph[e]->polyLine.size() - 1; ++i) {
-		float dist = Util::pointSegmentDistanceXY(roads.graph[e]->polyLine[i], roads.graph[e]->polyLine[i + 1], pt);
+		QVector2D closePt;
+		float dist = Util::pointSegmentDistanceXY(roads.graph[e]->polyLine[i], roads.graph[e]->polyLine[i + 1], pt, closePt);
 		if (dist < min_dist) {
 			min_dist = dist;
+			closestPt = closePt;
 		}
 	}
 
