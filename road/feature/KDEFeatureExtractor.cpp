@@ -15,7 +15,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	// Avenueのみを抽出する
 	RoadGraph temp_roads;
 	GraphUtil::copyRoads(roads, temp_roads);
-	GraphUtil::extractRoads(temp_roads, RoadEdge::TYPE_AVENUE);
+	GraphUtil::extractRoads(temp_roads, RoadEdge::TYPE_AVENUE | RoadEdge::TYPE_BOULEVARD);
 	GraphUtil::clean(temp_roads);
 	GraphUtil::reduce(temp_roads);
 
@@ -75,12 +75,10 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	// streetのみを抽出する
 	GraphUtil::copyRoads(roads, temp_roads);
 	GraphUtil::extractRoads(temp_roads, RoadEdge::TYPE_STREET);
-	GraphUtil::clean(temp_roads);
 	//GraphUtil::reduce(temp_roads);  <- わざとreduceしない
 
 	// linkを削除する
 	GraphUtil::removeLinkEdges(temp_roads);
-	GraphUtil::reduce(temp_roads);
 	GraphUtil::clean(temp_roads);
 
 	num_vertices = 0;
@@ -93,7 +91,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 		num_vertices++;
 
 		// エッジの数が2以下なら、スキップ
-		if (GraphUtil::getNumEdges(temp_roads, *vi) <= 2) continue;
+		//if (GraphUtil::getNumEdges(temp_roads, *vi) <= 2) continue;
 
 		// 頂点の座標の、エリア中心からのオフセットを登録
 		KDEFeatureItem item;

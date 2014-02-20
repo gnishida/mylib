@@ -250,6 +250,9 @@ bool KDERoadGenerator::growRoadSegment(RoadGraph &roads, Polygon2D &area, RoadVe
 	bool intersected = false;
 	bool outside = false;
 
+	bool toBeSeed = true;
+	if (edge.deadend) toBeSeed = false;
+
 	Polyline2D polyline;
 	polyline.push_back(roads.graph[srcDesc]->pt);
 
@@ -269,14 +272,12 @@ bool KDERoadGenerator::growRoadSegment(RoadGraph &roads, Polygon2D &area, RoadVe
 			if (src == srcDesc || tgt == srcDesc) return false;
 
 			pt = intPoint;
-
-			intersected = true;
 		}
 
 		// Densityをチェック
 		if (roadType == RoadEdge::TYPE_STREET) {
 			float density = GraphUtil::getNumVertices(roads, pt, 50);
-			if (density >= (f.density(roadType) + f.density(RoadEdge::TYPE_AVENUE)) * 50.0f * 50.0f * M_PI) return false;
+			if (density >= (f.density(roadType) + f.density(RoadEdge::TYPE_AVENUE)) * 50.0f * 50.0f * M_PI * 3) return false;
 		} else {
 			//float density = GraphUtil::getNumVertices(roads, pt, 400);
 			//if (density >= f.density(roadType) * 400.0f * 400.0f * M_PI) return false;
@@ -299,10 +300,13 @@ bool KDERoadGenerator::growRoadSegment(RoadGraph &roads, Polygon2D &area, RoadVe
 			snapDesc = desc;
 			snapped = true;
 			intersected = false;
+			toBeSeed = false;
 		} else if (canSnapToEdge(roads, pt, threshold, srcDesc, e_desc, closestPt)) {
 			// 実験。既存のエッジを分割させないよう、キャンセルさせてみる
-			if (roads.graph[e_desc]->type == roadType) {
+			if (roadType == RoadEdge::TYPE_AVENUE && roads.graph[e_desc]->type == RoadEdge::TYPE_AVENUE) {
 				return false;
+			} else if (!(roadType == RoadEdge::TYPE_STREET && roads.graph[e_desc]->type == RoadEdge::TYPE_AVENUE)) {
+				toBeSeed = false;
 			}
 
 			snapDesc = GraphUtil::splitEdge(roads, e_desc, pt);
@@ -313,6 +317,7 @@ bool KDERoadGenerator::growRoadSegment(RoadGraph &roads, Polygon2D &area, RoadVe
 				// エリア外周との交点を求める
 				area.intersects(roads.graph[srcDesc]->pt, pt, pt);
 				outside = true;
+				toBeSeed = false;
 			}
 		}
 
@@ -348,7 +353,8 @@ bool KDERoadGenerator::growRoadSegment(RoadGraph &roads, Polygon2D &area, RoadVe
 	}
 
 	// シードに追加
-	if (!snapped && !intersected && !outside && !edge.deadend) {
+	//if (!snapped && !intersected && !outside && !edge.deadend) {
+	if (toBeSeed) {
 		seeds.push_back(tgtDesc);
 
 		// 追加した頂点に、カーネルを割り当てる

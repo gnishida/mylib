@@ -2572,7 +2572,8 @@ void GraphUtil::removeShortDeadend(RoadGraph& roads, float threshold) {
 bool GraphUtil::isRoadTypeMatched(int type, int ref_type) {
 	if (ref_type == 0) return true;
 
-	if (((int)powf(2, (type - 1)) & ref_type)) return true;
+	//if (((int)powf(2, (type - 1)) & ref_type)) return true;
+	if (type & ref_type) return true;
 	else return false;
 }
 
