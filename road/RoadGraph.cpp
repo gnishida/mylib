@@ -30,7 +30,6 @@ void RoadGraph::generateMesh() {
 
 		RoadEdgePtr edge = graph[*ei];
 
-		QColor color, bgColor;
 		float height;
 		switch (edge->type) {
 		case RoadEdge::TYPE_HIGHWAY:
@@ -47,8 +46,8 @@ void RoadGraph::generateMesh() {
 			break;
 		}
 
-		color = graph[*ei]->color;
-		bgColor = graph[*ei]->bgColor;
+		QColor color = graph[*ei]->color;
+		QColor bgColor = graph[*ei]->bgColor;
 
 		// グループに基づいて色を決定
 		/*
@@ -73,7 +72,7 @@ void RoadGraph::generateMesh() {
 
 		// draw the border of the road segment
 		if ((showHighways && edge->type == RoadEdge::TYPE_HIGHWAY) || (showBoulevard && edge->type ==  RoadEdge::TYPE_BOULEVARD) || (showAvenues && edge->type ==  RoadEdge::TYPE_AVENUE) || (showLocalStreets && edge->type ==  RoadEdge::TYPE_STREET)) {
-			addMeshFromEdge(renderables[0], edge, widthBase * (1.0f + curbRatio), bgColor, 0.0f);
+			addMeshFromEdge(renderables[0], edge, widthBase * (1.0f + curbRatio), bgColor, height * 0.5f);
 			addMeshFromEdge(renderables[0], edge, widthBase, color, height);
 		}
 	}
