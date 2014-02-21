@@ -34,5 +34,6 @@ private:
 	void connectAvenues(RoadGraph &roads, float threshold);
 
 	int getClosestItem(const KDEFeature &f, int roadType, const QVector2D &pt);
+	RoadVertexDesc getNearestVertexWithKernel(RoadGraph &roads, const QVector2D &pt);
 };
 
