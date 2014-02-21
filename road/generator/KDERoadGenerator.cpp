@@ -232,6 +232,7 @@ void KDERoadGenerator::attemptExpansion(RoadGraph &roads, Polygon2D &area, RoadV
 
 	//KDEFeatureItem item = roads.graph[srcDesc]->kernel;
 	KDEFeatureItem item = getItem(roads, f, roadType, srcDesc, roads.graph[srcDesc]->pt - center);
+	roads.graph[srcDesc]->kernel = item;
 	
 	for (int i = 0; i < item.edges.size(); ++i) {
 		growRoadSegment(roads, area, srcDesc, roadType, f, item.edges[i], seeds);
@@ -407,13 +408,15 @@ bool KDERoadGenerator::intersects(RoadGraph &roads, const QVector2D& p0, const Q
  */
 KDEFeatureItem KDERoadGenerator::getItem(RoadGraph &roads, const KDEFeature& kf, int roadType, RoadVertexDesc v_desc, const QVector2D &offsetPosOfVertex) {
 	// 当該頂点から出るエッジをリストアップする
-	//QMap<RoadVertexDesc, RoadEdgeDesc> edges;
 	QList<Polyline2D> polylines;
+	QList<RoadVertexDesc> neighbors;
 	RoadOutEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::out_edges(v_desc, roads.graph); ei != eend; ++ei) {
 		if (!roads.graph[*ei]->valid) continue;
 
 		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+		neighbors.push_back(tgt);
+
 		if ((roads.graph[v_desc]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared() > (roads.graph[tgt]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared()) {
 			std::reverse(roads.graph[*ei]->polyLine.begin(), roads.graph[*ei]->polyLine.end());
 		}
@@ -433,10 +436,14 @@ KDEFeatureItem KDERoadGenerator::getItem(RoadGraph &roads, const KDEFeature& kf,
 			fitting_diff += kf.items(roadType)[i].getMinDistance(polylines[j]);
 		}		
 
-		// 位置が元のエリア内なら、位置のフィッティング度を計算
+		// 位置のフィッティング度を計算
 		float location_diff = 0.0f;
-		if (kf.area().contains(offsetPosOfVertex)) {
-			location_diff = (kf.items(roadType)[i].pt - offsetPosOfVertex).length();
+		if (kf.area().contains(offsetPosOfVertex)) { // 位置が元のエリア内なら
+			location_diff += (kf.items(roadType)[i].pt - offsetPosOfVertex).length();
+		} else {
+			for (int j = 0; j < neighbors.size(); ++j) { // 位置が元のエリア外なら、隣接頂点のカーネルの共起性を考慮
+				location_diff += (roads.graph[neighbors[j]]->kernel.pt - polylines[j][polylines[j].size() - 1] - offsetPosOfVertex).length();
+			}
 		}
 
 		// フィッティングスコアを計算
