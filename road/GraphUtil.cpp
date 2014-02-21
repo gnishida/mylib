@@ -1051,7 +1051,7 @@ void GraphUtil::copyRoads(RoadGraph& srcRoads, RoadGraph& dstRoads) {
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(srcRoads.graph); vi != vend; ++vi) {
 		// Add a vertex
-		RoadVertexPtr new_v = RoadVertexPtr(new RoadVertex(srcRoads.graph[*vi]->getPt()));
+		RoadVertexPtr new_v = RoadVertexPtr(new RoadVertex(*srcRoads.graph[*vi]));
 		new_v->valid = srcRoads.graph[*vi]->valid;
 		RoadVertexDesc new_v_desc = boost::add_vertex(dstRoads.graph);
 		dstRoads.graph[new_v_desc] = new_v;
@@ -1727,7 +1727,7 @@ void GraphUtil::clean(RoadGraph& roads) {
 		if (!temp.graph[*vi]->valid) continue;
 
 		// Add a vertex
-		RoadVertexPtr new_v = RoadVertexPtr(new RoadVertex(temp.graph[*vi]->getPt()));
+		RoadVertexPtr new_v = RoadVertexPtr(new RoadVertex(*temp.graph[*vi]));
 		RoadVertexDesc new_v_desc = boost::add_vertex(roads.graph);
 		roads.graph[new_v_desc] = new_v;	
 

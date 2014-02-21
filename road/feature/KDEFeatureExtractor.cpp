@@ -28,6 +28,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	GraphUtil::clean(temp_roads);
 
 	int num_vertices = 0;
+	int id = 0;
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(temp_roads.graph); vi != vend; ++vi) {
 		if (!temp_roads.graph[*vi]->valid) continue;
@@ -41,7 +42,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 		if (GraphUtil::getNumEdges(temp_roads, *vi) <= 2) continue;
 
 		// 頂点の座標の、エリア中心からのオフセットを登録
-		KDEFeatureItem item;
+		KDEFeatureItem item(id);
 		item.pt = temp_roads.graph[*vi]->pt - center;
 
 		// 各outing edgeを登録
@@ -62,6 +63,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 		}
 
 		kf->addItem(RoadEdge::TYPE_AVENUE, item);
+		id++;
 	}
 
 	BBox bbox = area.envelope();
@@ -82,6 +84,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	GraphUtil::clean(temp_roads);
 
 	num_vertices = 0;
+	id = 0;
 	for (boost::tie(vi, vend) = boost::vertices(temp_roads.graph); vi != vend; ++vi) {
 		if (!temp_roads.graph[*vi]->valid) continue;
 
@@ -94,7 +97,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 		//if (GraphUtil::getNumEdges(temp_roads, *vi) <= 2) continue;
 
 		// 頂点の座標の、エリア中心からのオフセットを登録
-		KDEFeatureItem item;
+		KDEFeatureItem item(id);
 		item.pt = temp_roads.graph[*vi]->pt - center;
 
 		// 各outing edgeを登録
@@ -114,6 +117,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 		}
 
 		kf->addItem(RoadEdge::TYPE_STREET, item);
+		id++;
 	}
 
 	kf->setDensity(RoadEdge::TYPE_STREET, num_vertices / area.area());

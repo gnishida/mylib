@@ -13,11 +13,13 @@
 
 class KDEFeatureItem {
 public:
+	int id;
 	QVector2D pt;
 	std::vector<KDEFeatureItemEdge> edges;
 
 public:
-	KDEFeatureItem() {}
+	KDEFeatureItem() : id(-1) {}
+	KDEFeatureItem(int id) : id(id) {}
 	~KDEFeatureItem() {}
 
 	void addEdge(const Polyline2D &polyline, bool deadend);
