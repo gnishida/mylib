@@ -12,5 +12,8 @@ public:
 	RoadArea();
 	RoadArea(const Polygon2D &area);
 	~RoadArea();
+
+	void load(QDomNode& node);
+	void save(QDomDocument& doc, QDomNode& node);
 };
 
