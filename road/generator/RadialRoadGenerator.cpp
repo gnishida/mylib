@@ -11,7 +11,7 @@ RadialRoadGenerator::~RadialRoadGenerator() {
 /**
  * Radialパターンの道路網を生成する
  */
-void RadialRoadGenerator::generateRoadNetwork(RoadGraph &roads, Polygon2D &area, const RadialFeature& rf) {
+void RadialRoadGenerator::generateRoadNetwork(RoadGraph &roads, const Polygon2D &area, const RadialFeature& rf) {
 	// 円形の道路を生成すると共に、シードを生成する
 	std::list<RoadVertexDesc> seeds;
 	generateCircleAvenues(roads, area, rf, seeds);
@@ -27,7 +27,7 @@ void RadialRoadGenerator::generateRoadNetwork(RoadGraph &roads, Polygon2D &area,
 /**
  * 指定されたRadial Featureに基づき、円形の道路を生成する。
  */
-void RadialRoadGenerator::generateCircleAvenues(RoadGraph& roads, Polygon2D& area, const RadialFeature& rf, std::list<RoadVertexDesc>& seeds) {
+void RadialRoadGenerator::generateCircleAvenues(RoadGraph& roads, const Polygon2D& area, const RadialFeature& rf, std::list<RoadVertexDesc>& seeds) {
 	seeds.clear();
 
 	QVector2D center = area.centroid();
@@ -80,7 +80,7 @@ void RadialRoadGenerator::generateCircleAvenues(RoadGraph& roads, Polygon2D& are
  * 指定された頂点から、道路を延長していく。
  * この道路は、放射線上の道路のうちの１つの線を構成する。
  */
-void RadialRoadGenerator::expandRadialAvenues(RoadGraph& roads, Polygon2D& area, const RadialFeature& rf, RoadVertexDesc desc) {
+void RadialRoadGenerator::expandRadialAvenues(RoadGraph& roads, const Polygon2D& area, const RadialFeature& rf, RoadVertexDesc desc) {
 	RoadVertexDesc prev_desc = desc;
 
 	while (true) {

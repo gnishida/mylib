@@ -39,6 +39,7 @@ public:
 	static int getNumEdges(RoadGraph& roads, RoadVertexDesc v, int roadType, bool onlyValidEdge = true);
 	static RoadEdgeDesc addEdge(RoadGraph& roads, RoadVertexDesc src, RoadVertexDesc tgt, unsigned int type, unsigned int lanes, bool oneWay = false, bool link = false, bool roundabout = false);
 	static RoadEdgeDesc addEdge(RoadGraph& roads, RoadVertexDesc src, RoadVertexDesc tgt, RoadEdgePtr ref_edge);
+	static RoadEdgeDesc addEdge(RoadGraph& roads, const Polyline2D &polyline, unsigned int type, unsigned int lanes, bool oneWay = false, bool link = false, bool roundabout = false);
 	static bool hasEdge(RoadGraph& roads, RoadVertexDesc desc1, RoadVertexDesc desc2, bool onlyValidEdge = true);
 	static RoadEdgeDesc getEdge(RoadGraph& roads, RoadVertexDesc src, RoadVertexDesc tgt, bool onlyValidEdge = true);
 	static void getOrderedPolyLine(RoadGraph& roads, RoadEdgeDesc e, std::vector<QVector2D>& polyline);
@@ -68,7 +69,7 @@ public:
 	static BBox getBoudingBox(RoadGraph& roads, float theta1, float theta2, float theta_step = 0.087f);
 	static void extractRoads(RoadGraph& roads, int roadType = 0);
 	static void extractRoads(RoadGraph& roads, Polygon2D& area, bool strict, int roadType = 0);
-	static void extractRoads2(RoadGraph& roads, Polygon2D& area, int roadType = 0);
+	static void extractRoads2(RoadGraph& roads, const Polygon2D& area, int roadType = 0);
 	static void subtractRoads(RoadGraph& roads, Polygon2D& area, bool strict);
 	static void subtractRoads2(RoadGraph& roads, Polygon2D& area);
 

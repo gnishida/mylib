@@ -4,6 +4,7 @@
 
 class RoadAreaSet {
 public:
+	RoadGraph roads;
 	std::vector<RoadArea> areas;
 
 public:
@@ -15,6 +16,10 @@ public:
 	void add(const RoadArea &area);
 	void clear();
 	void remove(int index);
+
+	void setZ(float z);
+
+	void addRoads(int roadType, int lanes, bool oneWay, const Polyline2D &polyline);
 
 	void load(QString filename);
 	void save(QString filename);

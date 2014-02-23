@@ -8,7 +8,7 @@ GenericRoadGenerator::GenericRoadGenerator() {
 GenericRoadGenerator::~GenericRoadGenerator() {
 }
 
-void GenericRoadGenerator::generateRoadNetwork(RoadGraph &roads, Polygon2D &area, const GenericFeature& gf) {
+void GenericRoadGenerator::generateRoadNetwork(RoadGraph &roads, const Polygon2D &area, const GenericFeature& gf) {
 	std::list<RoadVertexDesc> seeds;
 	std::list<RoadVertexDesc> newSeeds;
 
@@ -61,7 +61,7 @@ void GenericRoadGenerator::generateRoadNetwork(RoadGraph &roads, Polygon2D &area
  * @param seeds
  * @param inRoadGraph
  */
-void GenericRoadGenerator::generateInitialSeeds(RoadGraph &roads, Polygon2D &area, const GenericFeature& gf, std::list<RoadVertexDesc>& seeds) {
+void GenericRoadGenerator::generateInitialSeeds(RoadGraph &roads, const Polygon2D &area, const GenericFeature& gf, std::list<RoadVertexDesc>& seeds) {
 	seeds.clear();
 
 	QVector2D center = area.centroid();
@@ -157,7 +157,7 @@ bool GenericRoadGenerator::generateInitialStreetSeeds(RoadGraph &roads, const Ge
 * If new seeds are found, they are added to newSeeds.
 * This function DOES modify the graph
 **/
-void GenericRoadGenerator::attemptExpansion(RoadGraph &roads, Polygon2D &area, RoadVertexDesc &srcDesc, int roadType, const GenericFeature& gf, std::list<RoadVertexDesc> &newSeeds) {
+void GenericRoadGenerator::attemptExpansion(RoadGraph &roads, const Polygon2D &area, RoadVertexDesc &srcDesc, int roadType, const GenericFeature& gf, std::list<RoadVertexDesc> &newSeeds) {
 	newSeeds.clear();
 
 	for (int i = 0; i < roads.graph[srcDesc]->angles.size(); ++i) {

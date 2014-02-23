@@ -486,6 +486,18 @@ RoadEdgeDesc GraphUtil::addEdge(RoadGraph& roads, RoadVertexDesc src, RoadVertex
 	return edge_pair.first;
 }
 
+RoadEdgeDesc GraphUtil::addEdge(RoadGraph& roads, const Polyline2D &polyline, unsigned int type, unsigned int lanes, bool oneWay , bool link, bool roundabout) {
+	RoadVertexPtr v1 = RoadVertexPtr(new RoadVertex(polyline[0]));
+	RoadVertexDesc desc1 = addVertex(roads, v1);
+	RoadVertexPtr v2 = RoadVertexPtr(new RoadVertex(polyline[polyline.size() - 1]));
+	RoadVertexDesc desc2 = addVertex(roads, v2);
+
+	RoadEdgeDesc e_desc = addEdge(roads, desc1, desc2, type, lanes, oneWay, link, roundabout);
+	roads.graph[e_desc]->polyLine = polyline;
+
+	return e_desc;
+}
+
 /**
  * Check if there is an edge between two vertices.
  */
@@ -1278,7 +1290,7 @@ void GraphUtil::extractRoads(RoadGraph& roads, Polygon2D& area, bool strict, int
  * Extract roads that reside in the specified area.
  * If a edge is across the border of the area, add a vertex on the border and split the edge at the vertex.
  */
-void GraphUtil::extractRoads2(RoadGraph& roads, Polygon2D& area, int roadType) {
+void GraphUtil::extractRoads2(RoadGraph& roads, const Polygon2D& area, int roadType) {
 	QList<RoadEdgeDesc> edges;
 
 	RoadEdgeIter ei, eend;
@@ -2188,20 +2200,29 @@ bool GraphUtil::planarifyOne(RoadGraph& roads) {
 						if ((roads.graph[src]->pt - intPt).length() < 10 || (roads.graph[tgt]->pt - intPt).length() < 10 || (roads.graph[src2]->pt - intPt).length() < 10 || (roads.graph[tgt2]->pt - intPt).length() < 10) continue;
 
 						// 交点をノードとして登録
-						RoadVertexPtr new_v = RoadVertexPtr(new RoadVertex(intPt));
-						RoadVertexDesc new_v_desc = boost::add_vertex(roads.graph);
-						roads.graph[new_v_desc] = new_v;
+						RoadVertexDesc new_v_desc = splitEdge(roads, *ei, intPt);
+						RoadVertexDesc new_v_desc2 = splitEdge(roads, *ei2, intPt);
+
+
+
+						// 交点をノードとして登録
+						//RoadVertexPtr new_v = RoadVertexPtr(new RoadVertex(intPt));
+						//RoadVertexDesc new_v_desc = boost::add_vertex(roads.graph);
+						//roads.graph[new_v_desc] = new_v;
 
 						// もともとのエッジを無効にする
 						roads.graph[*ei]->valid = false;
 						roads.graph[*ei2]->valid = false;
 
-						// 新たなエッジを追加する
-						addEdge(roads, src, new_v_desc, roads.graph[*ei]->type, roads.graph[*ei]->lanes, roads.graph[*ei]->oneWay);
-						addEdge(roads, new_v_desc, tgt, roads.graph[*ei]->type, roads.graph[*ei]->lanes, roads.graph[*ei]->oneWay);
+						// スナップする
+						snapVertex(roads, new_v_desc2, new_v_desc);
 
-						addEdge(roads, src2, new_v_desc, roads.graph[*ei2]->type, roads.graph[*ei2]->lanes, roads.graph[*ei2]->oneWay);
-						addEdge(roads, new_v_desc, tgt2, roads.graph[*ei2]->type, roads.graph[*ei2]->lanes, roads.graph[*ei2]->oneWay);
+						// 新たなエッジを追加する
+						//addEdge(roads, src, new_v_desc, roads.graph[*ei]->type, roads.graph[*ei]->lanes, roads.graph[*ei]->oneWay);
+						//addEdge(roads, new_v_desc, tgt, roads.graph[*ei]->type, roads.graph[*ei]->lanes, roads.graph[*ei]->oneWay);
+
+						//addEdge(roads, src2, new_v_desc, roads.graph[*ei2]->type, roads.graph[*ei2]->lanes, roads.graph[*ei2]->oneWay);
+						//addEdge(roads, new_v_desc, tgt2, roads.graph[*ei2]->type, roads.graph[*ei2]->lanes, roads.graph[*ei2]->oneWay);
 
 						return true;
 					}

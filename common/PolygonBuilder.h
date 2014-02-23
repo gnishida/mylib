@@ -5,14 +5,14 @@
 #include <common/Polygon2D.h>
 #include <common/Polyline2D.h>
 
-class PolygonAreaBuilder {
+class PolygonBuilder {
 private:
 	bool _selecting;
 	Polyline2D _polyline;
 
 public:
-	PolygonAreaBuilder();
-	~PolygonAreaBuilder() {}
+	PolygonBuilder();
+	~PolygonBuilder() {}
 
 	void start(const QVector2D& pt);
 	void addPoint(const QVector2D& pt);

@@ -11,7 +11,7 @@ GridRoadGenerator::~GridRoadGenerator() {
 /**
  * グリッドパターンの道路網を生成する
  */
-void GridRoadGenerator::generateRoadNetwork(RoadGraph &roads, Polygon2D &area, const GridFeature& gf) {
+void GridRoadGenerator::generateRoadNetwork(RoadGraph &roads, const Polygon2D &area, const GridFeature& gf) {
 	// グリッド方向に合わせたBBoxのサイズを取得
 	Polygon2D area2;
 	float angle0 = gf.getAngles()[0];

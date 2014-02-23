@@ -9,10 +9,10 @@ public:
 	RadialRoadGenerator();
 	~RadialRoadGenerator();
 
-	void generateRoadNetwork(RoadGraph &roads, Polygon2D &area, const RadialFeature& rf);
+	void generateRoadNetwork(RoadGraph &roads, const Polygon2D &area, const RadialFeature& rf);
 
 private:
-	void generateCircleAvenues(RoadGraph& roads, Polygon2D& area, const RadialFeature& rf, std::list<RoadVertexDesc>& seeds);
-	void expandRadialAvenues(RoadGraph& roads, Polygon2D& area, const RadialFeature& rf, RoadVertexDesc desc);
+	void generateCircleAvenues(RoadGraph& roads, const Polygon2D& area, const RadialFeature& rf, std::list<RoadVertexDesc>& seeds);
+	void expandRadialAvenues(RoadGraph& roads, const Polygon2D& area, const RadialFeature& rf, RoadVertexDesc desc);
 };
 

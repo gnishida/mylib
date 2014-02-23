@@ -16,7 +16,7 @@ public:
 
 	void renderArea(const Polygon2D& area, GLenum lineType, const QColor& color, float height);
 	void renderPoint(const QVector2D& pt, const QColor& color, float height);
-	void renderPolyline(const Polyline2D& polyline, GLenum lineType, float height);
+	void renderPolyline(const Polyline2D& polyline, const QColor& color, GLenum lineType, float height);
 
 	//void tessellate(const Loop2D& polygon);
 	void renderConcave(Polygon2D& polygon, const QColor& color, float height);
