@@ -63,7 +63,10 @@ void KDERoadGenerator::generateRoadNetwork(RoadGraph &roads, const Polygon2D &ar
 		generateRoadsOnBoundary(roads, area, RoadEdge::TYPE_AVENUE, 1);
 	}
 
-	if (!isGenerateLocalStreets) return;
+	if (!isGenerateLocalStreets) {
+		GraphUtil::clean(roads);
+		return;
+	}
 
 	// Avenueをできる限りつなぐ
 	//connectAvenues(roads, 400.0f);
@@ -859,3 +862,182 @@ RoadVertexDesc KDERoadGenerator::getNearestVertexWithKernel(RoadGraph &roads, co
 	return nearest_desc;
 }
 
+/**
+ * 境界上の頂点を延長し、近くのエッジにぶつける
+ */
+void KDERoadGenerator::connectRoads(RoadGraph &roads, float dist_threshold, float angle_threshold) {
+	// 境界上の頂点、エッジの組をリストアップする
+	QList<RoadVertexDesc> boundaryNodes;
+	QMap<RoadVertexDesc, RoadEdgeDesc> boundaryEdges;
+	QMap<RoadVertexDesc, RoadVertexDesc> boundaryNodesPair;
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = edges(roads.graph); ei != eend; ++ei) {
+		if (!roads.graph[*ei]->valid) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads.graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+		
+		if (roads.graph[src]->onBoundary && GraphUtil::getDegree(roads, src) == 1) {
+			if (!boundaryNodes.contains(src)) boundaryNodes.push_back(src);
+			if (!boundaryEdges.contains(src)) boundaryEdges[src] = *ei;
+			if (!boundaryNodesPair.contains(src)) boundaryNodesPair[src] = tgt;
+		} else if (roads.graph[tgt]->onBoundary && GraphUtil::getDegree(roads, tgt) == 1) {
+			if (!boundaryNodes.contains(tgt)) boundaryNodes.push_back(tgt);
+			if (!boundaryEdges.contains(tgt)) boundaryEdges[tgt] = *ei;
+			if (!boundaryNodesPair.contains(tgt)) boundaryNodesPair[tgt] = src;
+		}
+	}
+
+	int numIterations = 1000;
+	while (!boundaryNodes.empty() && numIterations >= 0) {
+		RoadVertexDesc v_desc = boundaryNodes.front();
+		boundaryNodes.pop_front();
+
+		if (!roads.graph[v_desc]->valid) continue;
+
+		RoadVertexDesc v2_desc = boundaryNodesPair[v_desc];
+		RoadEdgeDesc e_desc = boundaryEdges[v_desc];
+
+		QVector2D step;
+		if ((roads.graph[v_desc]->pt - roads.graph[e_desc]->polyLine[0]).lengthSquared() <= (roads.graph[v2_desc]->pt - roads.graph[e_desc]->polyLine[0]).lengthSquared()) {
+			step = roads.graph[e_desc]->polyLine[0] - roads.graph[e_desc]->polyLine[1];
+		} else {
+			step = roads.graph[e_desc]->polyLine[roads.graph[e_desc]->polyLine.size() - 1] - roads.graph[e_desc]->polyLine[roads.graph[e_desc]->polyLine.size() - 2];
+		}
+		step = step.normalized() * 20.0f;
+
+		if (growRoadOneStep(roads, v_desc, step)) {
+			boundaryNodes.push_back(v_desc);
+		}
+
+		numIterations--;
+	}
+
+	GraphUtil::clean(roads);
+}
+
+bool KDERoadGenerator::growRoadOneStep(RoadGraph& roads, RoadVertexDesc srcDesc, const QVector2D& step) {
+	bool snapped = false;
+	bool intersected = false;
+
+	QVector2D pt = roads.graph[srcDesc]->pt + step;
+	RoadEdgeDesc closestEdge;
+
+	// INTERSECTS -- If edge intersects other edge
+	QVector2D intPoint;
+	intersected = intersects(roads, roads.graph[srcDesc]->pt, pt, closestEdge, intPoint);
+	if (intersected) {
+		pt = intPoint;
+	}
+
+	if (intersected) {
+		RoadVertexDesc splitVertex = GraphUtil::splitEdge(roads, closestEdge, pt);
+		GraphUtil::snapVertex(roads, srcDesc, splitVertex);
+
+		// 交差相手のエッジが、成長中のエッジなら、その成長をストップする
+		RoadVertexDesc src = boost::source(closestEdge, roads.graph);
+		RoadVertexDesc tgt = boost::target(closestEdge, roads.graph);
+		if (roads.graph[src]->onBoundary) {
+			RoadEdgeDesc e = GraphUtil::getEdge(roads, src, splitVertex);
+			roads.graph[e]->valid = false;
+			roads.graph[src]->valid = false;
+		} else if (roads.graph[tgt]->onBoundary) {
+			RoadEdgeDesc e = GraphUtil::getEdge(roads, tgt, splitVertex);
+			roads.graph[e]->valid = false;
+			roads.graph[tgt]->valid = false;
+		}
+
+		return false;
+	} else {
+		GraphUtil::moveVertex(roads, srcDesc, pt);
+		return true;
+	}	
+}
+
+/**
+ * 境界上の頂点を、できるだけ近くの他の頂点とつなぐ
+ */
+void KDERoadGenerator::connectRoads2(RoadAreaSet &areas, float dist_threshold, float angle_threshold) {
+	for (int i = 0; i < areas.size(); ++i) {
+		RoadVertexIter vi, vend;
+		for (boost::tie(vi, vend) = vertices(areas.areas[i].roads.graph); vi != vend; ++vi) {
+			if (!areas.areas[i].roads.graph[*vi]->valid) continue;
+
+			if (!areas.areas[i].roads.graph[*vi]->onBoundary) continue;
+
+			connectRoads2(areas, i, *vi, dist_threshold, angle_threshold);
+		}
+	}
+
+	// 繋がらなかった頂点については、その頂点と、そこから出るエッジを無効にする
+	/*
+	for (boost::tie(vi, vend) = vertices(roads.graph); vi != vend; ++vi) {
+		if (!roads.graph[*vi]->valid) continue;
+
+		if (!roads.graph[*vi]->onBoundary) continue;
+
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = out_edges(*vi, roads.graph); ei != eend; ++ei) {
+			roads.graph[*ei]->valid = false;
+		}
+
+		roads.graph[*vi]->valid = false;
+	}
+	*/
+
+	//GraphUtil::clean(roads);
+}
+
+void KDERoadGenerator::connectRoads2(RoadAreaSet &areas, int area_id, RoadVertexDesc v_desc, float dist_threshold, float angle_threshold) {
+	float dist_threshold2 = dist_threshold * dist_threshold;
+
+	float min_dist = std::numeric_limits<float>::max();
+	int min_area_id;
+	RoadVertexDesc min_desc;
+
+	// v_descの、もう一端の頂点を取得
+	RoadVertexDesc v2_desc;
+	RoadOutEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = out_edges(v_desc, areas.areas[area_id].roads.graph); ei != eend; ++ei) {
+		if (!areas.areas[area_id].roads.graph[*ei]->valid) continue;
+
+		v2_desc = boost::target(*ei, areas.areas[area_id].roads.graph);
+	}
+
+	for (int i = 0; i < areas.size(); ++i) {
+		if (i == area_id) continue;
+
+		RoadVertexIter vi, vend;
+		for (boost::tie(vi, vend) = vertices(areas.areas[i].roads.graph); vi != vend; ++vi) {
+			if (!areas.areas[i].roads.graph[*vi]->valid) continue;
+
+			//if (!roads.graph[*vi]->onBoundary) continue;
+
+			/*
+			for (boost::tie(ei, eend) = out_edges(*vi, roads.graph); ei != eend; ++ei) {
+				if (!roads.graph[*ei]->valid) continue;
+
+				RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+				float a = Util::diffAngle(roads.graph[*vi]->pt - roads.graph[tgt]->pt, roads.graph
+			}
+			*/
+
+			float dist = (areas.areas[i].roads.graph[*vi]->pt - areas.areas[area_id].roads.graph[v_desc]->pt).lengthSquared();
+			if (dist < min_dist) {
+				min_dist = dist;
+				min_area_id = i;
+				min_desc = *vi;
+			}
+		}
+	}
+
+	//if (min_dist > dist_threshold2) return;
+
+	// スナップにより、角度が大幅に変わる場合は、スナップさせない
+	float angle = Util::diffAngle(areas.areas[area_id].roads.graph[v_desc]->pt - areas.areas[area_id].roads.graph[v2_desc]->pt, areas.areas[min_area_id].roads.graph[min_desc]->pt - areas.areas[area_id].roads.graph[v2_desc]->pt);
+	if (angle > angle_threshold) return;
+
+	GraphUtil::moveVertex(areas.areas[area_id].roads, v_desc, areas.areas[min_area_id].roads.graph[min_desc]->pt);
+	areas.areas[area_id].roads.graph[v_desc]->onBoundary = false;
+	areas.areas[min_area_id].roads.graph[min_desc]->onBoundary = false;
+}

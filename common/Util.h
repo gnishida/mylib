@@ -18,6 +18,9 @@ public:
 	static bool segmentSegmentIntersectXY(const QVector2D& a, const QVector2D& b, const QVector2D& c, const QVector2D& d, float *tab, float *tcd, bool segmentOnly, QVector2D &intPoint);
 	static float pointSegmentDistanceXY(const QVector2D& a, const QVector2D& b, const QVector2D& c, QVector2D& closestPtInAB);
 
+	static bool leftTurn(const QVector2D& a, const QVector2D& b, const QVector2D& c);
+	static bool Util::leftTurn(const QVector2D& v1, const QVector2D& v2);
+
 	// 角度関係
 	static float rad2deg(float rad);
 	static float normalizeAngle(float angle);

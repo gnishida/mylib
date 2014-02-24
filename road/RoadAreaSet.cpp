@@ -35,10 +35,24 @@ void RoadAreaSet::addRoads(int roadType, int lanes, bool oneWay, const Polyline2
 	GraphUtil::clean(roads);
 }
 
+void RoadAreaSet::mergeRoads() {
+	for (int i = 0; i < areas.size(); ++i) {
+		GraphUtil::mergeRoads(roads, areas[i].roads);
+		areas[i].roads.clear();
+	}
+}
+
 /**
  * 与えられたfeatureノード配下のXML情報に基づいて、グリッド特徴量を設定する。
  */
 void RoadAreaSet::load(QString filename) {
+	// ファイル名からディレクトリ部を取得
+	QString dirname;
+	int index = filename.lastIndexOf("/");
+	if (index > 0) {
+		dirname = filename.mid(0, index);
+	}
+
 	QFile file(filename);
 
 	QDomDocument doc;
@@ -46,7 +60,7 @@ void RoadAreaSet::load(QString filename) {
 	QDomElement root = doc.documentElement();
 
 	if (root.hasAttribute("roads")) {
-		QString roadFilename = root.attribute("roads");
+		QString roadFilename = dirname + "/" + root.attribute("roads");
 		GraphUtil::loadRoads(roads, roadFilename);
 	}
 
@@ -63,9 +77,18 @@ void RoadAreaSet::load(QString filename) {
 }
 
 void RoadAreaSet::save(QString filename) {
+	// ファイル名からファイル名を取得
+	QString name;
+	int index = filename.lastIndexOf("/");
+	if (index > 0) {
+		name = filename.mid(0, index);
+	} else {
+		name = filename;
+	}
+
 	QDomDocument doc;
 
-	QString roadFilename = filename + ".gsm";
+	QString roadFilename = name + ".gsm";
 	GraphUtil::saveRoads(roads, roadFilename);
 
 	QDomElement root = doc.createElement("areas");

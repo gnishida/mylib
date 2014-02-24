@@ -160,6 +160,15 @@ float Util::pointSegmentDistanceXY(const QVector2D& a, const QVector2D& b, const
 	return abs(dist);
 }
 
+bool Util::leftTurn(const QVector2D& a, const QVector2D& b, const QVector2D& c) {
+	return leftTurn(b - a, c - b);
+}
+
+bool Util::leftTurn(const QVector2D& v1, const QVector2D& v2) {
+	if (v1.x() * v2.y() - v1.y() * v2.x() >= 0) return true;
+	else return false;
+}
+
 float Util::rad2deg(float rad) {
 	return ((rad*180.0f) / M_PI);
 }

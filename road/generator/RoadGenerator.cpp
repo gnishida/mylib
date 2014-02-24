@@ -20,7 +20,6 @@ void RoadGenerator::generateRoadNetwork(RoadGraph& roads, const Polygon2D &area,
 
 	GridRoadGenerator rg1;
 	RadialRoadGenerator rg2;
-	KDERoadGenerator rg3;
 	GenericRoadGenerator rg4;
 
 	switch (rf.features[0]->type()) {
@@ -31,11 +30,13 @@ void RoadGenerator::generateRoadNetwork(RoadGraph& roads, const Polygon2D &area,
 		rg2.generateRoadNetwork(roads, area, dynamic_cast<RadialFeature&>(*rf.features[0]));
 		break;
 	case AbstractFeature::TYPE_KDE:
-		rg3.generateRoadNetwork(roads, area, dynamic_cast<KDEFeature&>(*rf.features[0]), addAvenuesOnBoundary, numIterations, isGenerateLocalStreets);
+		KDERoadGenerator::generateRoadNetwork(roads, area, dynamic_cast<KDEFeature&>(*rf.features[0]), addAvenuesOnBoundary, numIterations, isGenerateLocalStreets);
 		break;
 	case AbstractFeature::TYPE_GENERIC:
 		rg4.generateRoadNetwork(roads, area, dynamic_cast<GenericFeature&>(*rf.features[0]));
 		break;
 	}
+
+	roads.setModified();
 }
 
