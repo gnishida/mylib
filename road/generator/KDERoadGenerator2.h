@@ -37,6 +37,8 @@ private:
 	static int getClosestItem(const KDEFeature &f, int roadType, const QVector2D &pt);
 	static RoadVertexDesc getNearestVertexWithKernel(RoadGraph &roads, const QVector2D &pt);
 
+	static bool withinTerritory(RoadGraph &roads, const QVector2D &pt, RoadVertexDesc ignore);
+
 public:
 	static void connectRoads(RoadGraph &roads, float dist_threshold, float angle_threshold);
 	static bool growRoadOneStep(RoadGraph& roads, RoadVertexDesc srcDesc, const QVector2D& step);

@@ -119,6 +119,28 @@ RoadVertexDesc GraphUtil::getVertex(RoadGraph& roads, const QVector2D& pt, bool 
 }
 
 /**
+ * Find the closest vertex from the specified point. The specified vertex should be ignored.
+ */
+RoadVertexDesc GraphUtil::getVertex(RoadGraph& roads, const QVector2D& pt, RoadVertexDesc ignore, bool onlyValidVertex) {
+	RoadVertexDesc nearest_desc;
+	float min_dist = std::numeric_limits<float>::max();
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		if (*vi == ignore) continue;
+		if (onlyValidVertex && !roads.graph[*vi]->valid) continue;
+
+		float dist = (roads.graph[*vi]->getPt() - pt).lengthSquared();
+		if (dist < min_dist) {
+			nearest_desc = *vi;
+			min_dist = dist;
+		}
+	}
+
+	return nearest_desc;
+}
+
+/**
  * 近隣頂点を探す。
  * ただし、方向ベクトルがangle方向からしきい値を超えてる場合、その頂点はスキップする。
  */

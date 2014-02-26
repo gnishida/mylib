@@ -9,6 +9,9 @@
 
 class RoadFeature {
 public:
+	static QString version;
+
+public:
 	std::vector<AbstractFeaturePtr> features;
 
 public:

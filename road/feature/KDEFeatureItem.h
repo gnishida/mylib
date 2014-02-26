@@ -15,6 +15,7 @@ class KDEFeatureItem {
 public:
 	int id;
 	QVector2D pt;
+	float territory;
 	std::vector<KDEFeatureItemEdge> edges;
 
 public:

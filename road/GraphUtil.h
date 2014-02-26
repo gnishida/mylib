@@ -18,6 +18,7 @@ public:
 	static int getNumConnectedVertices(RoadGraph& roads, RoadVertexDesc start, bool onlyValidVertex = true);
 	static RoadVertexDesc getVertex(RoadGraph& roads, int index, bool onlyValidVertex = true);
 	static RoadVertexDesc getVertex(RoadGraph& roads, const QVector2D& pt, bool onlyValidVertex = true);
+	static RoadVertexDesc getVertex(RoadGraph& roads, const QVector2D& pt, RoadVertexDesc ignore, bool onlyValidVertex = true);
 	static RoadVertexDesc getVertex(RoadGraph& roads, const QVector2D& pt, float angle, float angle_threshold, bool onlyValidVertex = true);
 	static bool getVertex(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc& desc, bool onlyValidVertex = true);
 	static bool getVertex(RoadGraph& roads, RoadVertexDesc v, float threshold, RoadVertexDesc& desc, bool onlyValidVertex = true);

@@ -291,7 +291,6 @@ bool KDERoadGenerator::growRoadSegment(RoadGraph &roads, const Polygon2D &area, 
 	bool outside = false;
 
 	bool toBeSeed = true;
-	if (edge.deadend) toBeSeed = false;
 
 	Polyline2D polyline;
 	polyline.push_back(roads.graph[srcDesc]->pt);
@@ -721,6 +720,25 @@ float KDERoadGenerator::getNearestVertex(RoadGraph& roads, const QVector2D& pos,
 	}
 
 	return min_dist;
+}
+
+/**
+ * 指定された点が、いずれかの頂点のテリトリーに入っているかチェックする。
+ */
+bool KDERoadGenerator::withinTerritory(RoadGraph &roads, const QVector2D &pt, RoadVertexDesc ignore) {
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		if (*vi == ignore) continue;
+		if (!roads.graph[*vi]->valid) continue;
+
+		// カーネルのない頂点はスキップ
+		if (roads.graph[*vi]->kernel.id == -1) continue;
+
+		// 誤差により、テリトリーに入っていると判断されてしまうのを防ぐため、0.9fをかける。
+		if ((roads.graph[*vi]->pt - pt).lengthSquared() < roads.graph[*vi]->kernel.territory * roads.graph[*vi]->kernel.territory * 0.9f) return true;
+	}
+
+	return false;
 }
 
 float KDERoadGenerator::getNearestEdge(RoadGraph& roads, const QVector2D& pt, RoadVertexDesc srcDesc, RoadEdgeDesc& snapEdge, QVector2D &closestPt) {
