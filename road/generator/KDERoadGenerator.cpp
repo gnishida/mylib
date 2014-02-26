@@ -135,7 +135,7 @@ void KDERoadGenerator::addAvenueSeed(RoadGraph &roads, const Polygon2D &area, co
 	QVector2D center = area.centroid();
 
 	// Avenueカーネルの中で、offsetの位置に最も近いものを探す
-	int min_index = getClosestItem(f, RoadEdge::TYPE_AVENUE, offset);
+	int min_index = RoadGeneratorHelper::getClosestItem(f, RoadEdge::TYPE_AVENUE, offset);
 
 	// もし、シードとして使用済みのカーネルなら、シードとして追加せずにキャンセル
 	if (usedKernels.contains(min_index)) return;
@@ -238,10 +238,10 @@ void KDERoadGenerator::generateStreetSeeds(RoadGraph &roads, const Polygon2D &ar
 		if (!faces[i]->contains(center)) continue;
 
 		// 直近のAvenue頂点を探し、そのカーネルのサンプル空間での座標を取得する
-		RoadVertexDesc nearestVertex = getNearestVertexWithKernel(roads, center);
+		RoadVertexDesc nearestVertex = RoadGeneratorHelper::getNearestVertexWithKernel(roads, center);
 		QVector2D item_pt = roads.graph[nearestVertex]->kernel.pt;
 
-		int item_index = getClosestItem(f, RoadEdge::TYPE_STREET, center - roads.graph[nearestVertex]->pt + item_pt);
+		int item_index = RoadGeneratorHelper::getClosestItem(f, RoadEdge::TYPE_STREET, center - roads.graph[nearestVertex]->pt + item_pt);
 
 		// もし、サンプル空間での座標のずれが大きすぎる場合は、シードなしとする。
 		if ((f.items(RoadEdge::TYPE_STREET)[item_index].pt - item_pt).lengthSquared() > 500 * 500) continue;
@@ -650,44 +650,6 @@ void KDERoadGenerator::connectAvenues(RoadGraph &roads, float threshold) {
 			GraphUtil::addEdge(roads, deadendVertices[i], desc, RoadEdge::TYPE_AVENUE, 1);
 		}
 	}
-}
-
-/**
- * カーネルの中で、指定された位置に最も近いものを探し、そのインデックスを返却する。
- */
-int KDERoadGenerator::getClosestItem(const KDEFeature &f, int roadType, const QVector2D &pt) {
-	float min_dist = std::numeric_limits<float>::max();
-	int min_index = -1;
-	for (int i = 0; i < f.items(roadType).size(); ++i) {
-		float dist = (f.items(roadType)[i].pt - pt).lengthSquared();
-		if (dist < min_dist) {
-			min_dist = dist;
-			min_index = i;
-		}
-	}
-
-	return min_index;
-}
-
-RoadVertexDesc KDERoadGenerator::getNearestVertexWithKernel(RoadGraph &roads, const QVector2D &pt) {
-	RoadVertexDesc nearest_desc;
-	float min_dist = std::numeric_limits<float>::max();
-
-	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
-		if (!roads.graph[*vi]->valid) continue;
-
-		// カーネルのない頂点はスキップ
-		if (roads.graph[*vi]->kernel.id == -1) continue;
-
-		float dist = (roads.graph[*vi]->getPt() - pt).lengthSquared();
-		if (dist < min_dist) {
-			nearest_desc = *vi;
-			min_dist = dist;
-		}
-	}
-
-	return nearest_desc;
 }
 
 /**

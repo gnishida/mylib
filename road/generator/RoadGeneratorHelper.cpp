@@ -121,6 +121,7 @@ bool RoadGeneratorHelper::canSnapToEdge(RoadGraph& roads, const QVector2D& pos, 
 /**
  * 指定された位置posに最も近い頂点snapDescを取得し、そこまでの距離を返却する。
  * ただし、srcDesc、又は、その隣接頂点は、スナップ対象外とする。
+ * 現在、この関数は使用されていない。
  */
 float RoadGeneratorHelper::getNearestVertex(RoadGraph& roads, const QVector2D& pos, RoadVertexDesc srcDesc, RoadVertexDesc& snapDesc) {
 	float min_dist = std::numeric_limits<float>::max();
@@ -152,6 +153,7 @@ float RoadGeneratorHelper::getNearestVertex(RoadGraph& roads, const QVector2D& p
 /**
  * 指定された位置posに最も近いエッジsnapEdgeを取得し、そこまでの距離を返却する。
  * ただし、srcDesc、又は、その隣接頂点は、スナップ対象外とする。
+ * 現在、この関数は使用されていない。
  */
 float RoadGeneratorHelper::getNearestEdge(RoadGraph& roads, const QVector2D& pt, RoadVertexDesc srcDesc, RoadEdgeDesc& snapEdge, QVector2D &closestPt) {
 	float min_dist = std::numeric_limits<float>::max();
@@ -184,6 +186,31 @@ float RoadGeneratorHelper::getNearestEdge(RoadGraph& roads, const QVector2D& pt,
 }
 
 /**
+ * カーネル設定済みの頂点の中から、直近のものを探す。
+ * 現在、KDERoadGeneratorクラスでのみ使用。KDERoadGenerator2クラスでは使用していない。
+ */
+RoadVertexDesc RoadGeneratorHelper::getNearestVertexWithKernel(RoadGraph &roads, const QVector2D &pt) {
+	RoadVertexDesc nearest_desc;
+	float min_dist = std::numeric_limits<float>::max();
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		if (!roads.graph[*vi]->valid) continue;
+
+		// カーネルのない頂点はスキップ
+		if (roads.graph[*vi]->kernel.id == -1) continue;
+
+		float dist = (roads.graph[*vi]->getPt() - pt).lengthSquared();
+		if (dist < min_dist) {
+			nearest_desc = *vi;
+			min_dist = dist;
+		}
+	}
+
+	return nearest_desc;
+}
+
+/**
  * 指定された点が、いずれかの頂点のテリトリーに入っているかチェックする。
  * ただし、頂点ignoreは除く。
  */
@@ -201,4 +228,21 @@ bool RoadGeneratorHelper::withinTerritory(RoadGraph &roads, const QVector2D &pt,
 	}
 
 	return false;
+}
+
+/**
+ * カーネルの中で、指定された位置に最も近いものを探し、そのインデックスを返却する。
+ */
+int RoadGeneratorHelper::getClosestItem(const KDEFeature &f, int roadType, const QVector2D &pt) {
+	float min_dist = std::numeric_limits<float>::max();
+	int min_index = -1;
+	for (int i = 0; i < f.items(roadType).size(); ++i) {
+		float dist = (f.items(roadType)[i].pt - pt).lengthSquared();
+		if (dist < min_dist) {
+			min_dist = dist;
+			min_index = i;
+		}
+	}
+
+	return min_index;
 }

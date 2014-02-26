@@ -123,7 +123,7 @@ void KDERoadGenerator2::addAvenueSeed(RoadGraph &roads, const Polygon2D &area, c
 	QVector2D center = area.centroid();
 
 	// Avenueカーネルの中で、offsetの位置に最も近いものを探す
-	int min_index = getClosestItem(f, RoadEdge::TYPE_AVENUE, offset);
+	int min_index = RoadGeneratorHelper::getClosestItem(f, RoadEdge::TYPE_AVENUE, offset);
 
 	// もし、シードとして使用済みのカーネルなら、シードとして追加せずにキャンセル
 	if (usedKernels.contains(min_index)) return;
@@ -386,86 +386,6 @@ KDEFeatureItem KDERoadGenerator2::getItem(RoadGraph &roads, const KDEFeature& kf
 }
 
 /**
- * テスト中の案２
- */
-/*KDEFeatureItem KDERoadGenerator2::getItem2(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, int roadType, RoadVertexDesc v_desc) {
-	BBox bbox = area.envelope();
-	BBox bbox2 = kf.area().envelope();
-
-	float scaleX = bbox2.dx() / bbox.dx();
-	float scaleY = bbox2.dy() / bbox.dy();
-
-	// 当該頂点の座標を、サンプル空間の座標に射影する
-	QVector2D offsetPosOfVertex;
-	offsetPosOfVertex.setX((roads.graph[v_desc]->pt - bbox.minPt).x() * scaleX + bbox2.minPt.x());
-	offsetPosOfVertex.setY((roads.graph[v_desc]->pt - bbox.minPt).y() * scaleY + bbox2.minPt.y());
-
-	// 当該頂点から出るエッジをリストアップする
-	QList<Polyline2D> polylines;
-	QList<RoadVertexDesc> neighbors;
-	RoadOutEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::out_edges(v_desc, roads.graph); ei != eend; ++ei) {
-		if (!roads.graph[*ei]->valid) continue;
-
-		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
-		neighbors.push_back(tgt);
-
-		if ((roads.graph[v_desc]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared() > (roads.graph[tgt]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared()) {
-			std::reverse(roads.graph[*ei]->polyLine.begin(), roads.graph[*ei]->polyLine.end());
-		}
-		polylines.push_back(roads.graph[*ei]->polyLine);
-	}
-
-	// 各カーネルについて、非類似度スコアを計算する
-	float fitting_weight = 10.0f;
-	float location_weight = 1.0f;
-
-	float min_diff = std::numeric_limits<float>::max();
-	int min_index = -1;
-	for (int i = 0; i < kf.items(roadType).size(); ++i) {
-		// エッジのフィッティング度を計算
-		float fitting_diff = 0.0f;
-		for (int j = 0; j < polylines.size(); ++j) {
-			fitting_diff += kf.items(roadType)[i].getMinDistance(polylines[j]);
-		}		
-
-		// 位置のフィッティング度を計算
-		float location_diff = 0.0f;
-		//if (kf.area().contains(offsetPosOfVertex)) { // 位置が元のエリア内なら
-			location_diff += (kf.items(roadType)[i].pt - offsetPosOfVertex).length();
-		//}
-
-		// フィッティングスコアを計算
-		float diff = fitting_diff * fitting_weight + location_diff * location_weight;
-		if (diff < min_diff) {
-			min_diff = diff;
-			min_index = i;
-		}
-	}
-
-	KDEFeatureItem item = kf.items(roadType)[min_index];
-
-	// 与えられたエッジの方向に近いエッジを削除する
-	for (int j = 0; j < polylines.size(); ++j) {
-		float min_angle = std::numeric_limits<float>::max();
-		int min_edge_index = -1;
-		for (int i = 0; i < item.edges.size(); ++i) {
-			float angle = Util::diffAngle(item.edges[i].edge[0], polylines[j][1] - polylines[j][0]);
-			if (angle < min_angle) {
-				min_angle = angle;
-				min_edge_index = i;
-			}
-		}
-		if (min_angle < 0.6f) {
-			item.edges.erase(item.edges.begin() + min_edge_index);
-		}
-	}
-
-	return item;
-}
-*/
-
-/**
  * degree=1の頂点について、近くの頂点とできる限りつなぐ。
  */
 void KDERoadGenerator2::connectAvenues(RoadGraph &roads, float threshold) {
@@ -534,44 +454,6 @@ void KDERoadGenerator2::connectAvenues(RoadGraph &roads, float threshold) {
 			GraphUtil::addEdge(roads, deadendVertices[i], desc, RoadEdge::TYPE_AVENUE, 1);
 		}
 	}
-}
-
-/**
- * カーネルの中で、指定された位置に最も近いものを探し、そのインデックスを返却する。
- */
-int KDERoadGenerator2::getClosestItem(const KDEFeature &f, int roadType, const QVector2D &pt) {
-	float min_dist = std::numeric_limits<float>::max();
-	int min_index = -1;
-	for (int i = 0; i < f.items(roadType).size(); ++i) {
-		float dist = (f.items(roadType)[i].pt - pt).lengthSquared();
-		if (dist < min_dist) {
-			min_dist = dist;
-			min_index = i;
-		}
-	}
-
-	return min_index;
-}
-
-RoadVertexDesc KDERoadGenerator2::getNearestVertexWithKernel(RoadGraph &roads, const QVector2D &pt) {
-	RoadVertexDesc nearest_desc;
-	float min_dist = std::numeric_limits<float>::max();
-
-	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
-		if (!roads.graph[*vi]->valid) continue;
-
-		// カーネルのない頂点はスキップ
-		if (roads.graph[*vi]->kernel.id == -1) continue;
-
-		float dist = (roads.graph[*vi]->getPt() - pt).lengthSquared();
-		if (dist < min_dist) {
-			nearest_desc = *vi;
-			min_dist = dist;
-		}
-	}
-
-	return nearest_desc;
 }
 
 /**

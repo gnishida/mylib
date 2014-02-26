@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "../RoadGraph.h"
+#include "../feature/KDEFeature.h"
 
 /**
  * 道路網生成のヘルパークラス。
@@ -18,9 +19,10 @@ public:
 
 	static float getNearestVertex(RoadGraph& roads, const QVector2D& pos, RoadVertexDesc srcDesc, RoadVertexDesc& snapDesc);
 	static float getNearestEdge(RoadGraph& roads, const QVector2D& pt, RoadVertexDesc srcDesc, RoadEdgeDesc& snapEdge, QVector2D &closestPt);
+	static RoadVertexDesc getNearestVertexWithKernel(RoadGraph &roads, const QVector2D &pt);
 
 	static bool withinTerritory(RoadGraph &roads, const QVector2D &pt, RoadVertexDesc ignore);
 
-
+	static int getClosestItem(const KDEFeature &f, int roadType, const QVector2D &pt);
 };
 
