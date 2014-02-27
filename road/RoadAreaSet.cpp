@@ -76,14 +76,14 @@ void RoadAreaSet::load(QString filename) {
 	}
 }
 
-void RoadAreaSet::save(QString filename) {
-	// ファイル名からファイル名を取得
+void RoadAreaSet::save(QString filepath) {
+	// ファイルパスからファイル名を取得
 	QString name;
-	int index = filename.lastIndexOf("/");
-	if (index > 0) {
-		name = filename.mid(0, index);
+	int index = filepath.lastIndexOf("/");
+	if (index >= 0) {
+		name = filepath.mid(index + 1);
 	} else {
-		name = filename;
+		name = filepath;
 	}
 
 	QDomDocument doc;
@@ -100,7 +100,7 @@ void RoadAreaSet::save(QString filename) {
 	}
 
 	// write the dom to the file
-	QFile file(filename);
+	QFile file(filepath);
 	file.open(QIODevice::WriteOnly);
 
 	QTextStream out(&file);

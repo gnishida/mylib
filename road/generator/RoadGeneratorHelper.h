@@ -21,7 +21,7 @@ public:
 	static float getNearestEdge(RoadGraph& roads, const QVector2D& pt, RoadVertexDesc srcDesc, RoadEdgeDesc& snapEdge, QVector2D &closestPt);
 	static RoadVertexDesc getNearestVertexWithKernel(RoadGraph &roads, const QVector2D &pt);
 
-	static bool withinTerritory(RoadGraph &roads, const QVector2D &pt, RoadVertexDesc ignore);
+	static bool invadingTerritory(RoadGraph &roads, const QVector2D &pt, RoadVertexDesc srcVertex, const QVector2D &targetPt);
 
 	static int getClosestItem(const KDEFeature &f, int roadType, const QVector2D &pt);
 };

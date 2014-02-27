@@ -221,11 +221,12 @@ bool GraphUtil::getVertex(RoadGraph& roads, const QVector2D& pos, float threshol
 
 /**
  * Add a vertex.
+ * Note: The specified vertex v is used for this vertex instead of copying it.
  */
 RoadVertexDesc GraphUtil::addVertex(RoadGraph& roads, RoadVertexPtr v) {
-	RoadVertexPtr new_v = RoadVertexPtr(new RoadVertex(*v));
+	//RoadVertexPtr new_v = RoadVertexPtr(new RoadVertex(*v));
 	RoadVertexDesc new_v_desc = boost::add_vertex(roads.graph);
-	roads.graph[new_v_desc] = new_v;
+	roads.graph[new_v_desc] = v;
 
 	roads.setModified();
 
@@ -511,7 +512,7 @@ RoadEdgeDesc GraphUtil::addEdge(RoadGraph& roads, RoadVertexDesc src, RoadVertex
 RoadEdgeDesc GraphUtil::addEdge(RoadGraph& roads, const Polyline2D &polyline, unsigned int type, unsigned int lanes, bool oneWay , bool link, bool roundabout) {
 	RoadVertexPtr v1 = RoadVertexPtr(new RoadVertex(polyline[0]));
 	RoadVertexDesc desc1 = addVertex(roads, v1);
-	RoadVertexPtr v2 = RoadVertexPtr(new RoadVertex(polyline[polyline.size() - 1]));
+	RoadVertexPtr v2 = RoadVertexPtr(new RoadVertex(polyline.last()));
 	RoadVertexDesc desc2 = addVertex(roads, v2);
 
 	RoadEdgeDesc e_desc = addEdge(roads, desc1, desc2, type, lanes, oneWay, link, roundabout);
@@ -893,7 +894,7 @@ Polyline2D GraphUtil::finerEdge(RoadGraph& roads, RoadEdgeDesc e, float step) {
 			polyLine.push_back(roads.graph[e]->polyLine[i] + vec * (float)j / length);
 		}
 	}
-	polyLine.push_back(roads.graph[e]->polyLine[roads.graph[e]->polyLine.size() - 1]);
+	polyLine.push_back(roads.graph[e]->polyLine.last());
 
 	return polyLine;
 }

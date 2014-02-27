@@ -212,19 +212,41 @@ RoadVertexDesc RoadGeneratorHelper::getNearestVertexWithKernel(RoadGraph &roads,
 
 /**
  * 指定された点が、いずれかの頂点のテリトリーに入っているかチェックする。
- * ただし、頂点ignoreは除く。
+ * ただし、頂点srcVertexは除く。
+ * また、対象となる頂点へ伸びていて、且つ、対象となる頂点から、頂点srcVertexへもエッジが来る場合も、除外する。
  */
-bool RoadGeneratorHelper::withinTerritory(RoadGraph &roads, const QVector2D &pt, RoadVertexDesc ignore) {
+bool RoadGeneratorHelper::invadingTerritory(RoadGraph &roads, const QVector2D &pt, RoadVertexDesc srcVertex, const QVector2D &targetPt) {
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
-		if (*vi == ignore) continue;
+		if (*vi == srcVertex) continue;
 		if (!roads.graph[*vi]->valid) continue;
+
+		// ベクトルsrcVertex→*viと、ベクトルsrcVertex→ptが、逆方向なら、スキップ
+		if (QVector2D::dotProduct(roads.graph[*vi]->pt - roads.graph[srcVertex]->pt, pt - roads.graph[srcVertex]->pt) < 0) continue;
 
 		// カーネルのない頂点はスキップ
 		if (roads.graph[*vi]->kernel.id == -1) continue;
 
 		// 誤差により、テリトリーに入っていると判断されてしまうのを防ぐため、0.9fをかける。
-		if ((roads.graph[*vi]->pt - pt).lengthSquared() < roads.graph[*vi]->kernel.territory * roads.graph[*vi]->kernel.territory * 0.9f) return true;
+		if ((roads.graph[*vi]->pt - pt).lengthSquared() < roads.graph[*vi]->kernel.territory * roads.graph[*vi]->kernel.territory * 0.9f) {
+			// 対象となる頂点方向へ、エッジが伸びていない場合（角度が15度より大きい）は、「侵入」と判断する
+			if (Util::diffAngle(roads.graph[*vi]->pt - pt, targetPt - pt) > M_PI * 15.0f / 180.0f) return true;
+
+			if (roads.graph[*vi]->kernel.id == -1) return true;
+
+			// 対象となる頂点から、頂点srcVertex方向へ向かうエッジがなければ、「侵入」と判断する
+			bool close = false;
+			for (int i = 0; i < roads.graph[*vi]->kernel.edges.size(); ++i) {
+				if (Util::diffAngle(roads.graph[*vi]->kernel.edges[i].edge.last(), roads.graph[srcVertex]->pt - roads.graph[*vi]->pt) < M_PI * 15.0f / 180.0f) {
+					close = true;
+					break;
+				}
+			}
+
+			if (!close) return true;
+
+			continue;
+		}
 	}
 
 	return false;

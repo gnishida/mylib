@@ -10,6 +10,8 @@ public:
 	~Polyline2D() {}
 
 	//void translate(float x, float y);
+	const QVector2D & last() const;
+	QVector2D & last();
 };
 
 /**

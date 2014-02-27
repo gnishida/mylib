@@ -12,3 +12,11 @@
 	boost::geometry::strategy::transform::translate_transformer<QVector2D, QVector2D> translate(x, y);
     boost::geometry::transform(temp, *this, translate);
 }*/
+
+const QVector2D & Polyline2D::last() const {
+	return at(size() - 1);
+}
+
+QVector2D & Polyline2D::last() {
+	return at(size() - 1);
+}

@@ -469,7 +469,7 @@ KDEFeatureItem KDERoadGenerator::getItem(RoadGraph &roads, const KDEFeature& kf,
 			location_diff += (kf.items(roadType)[i].pt - offsetPosOfVertex).length();
 		} else {
 			for (int j = 0; j < neighbors.size(); ++j) { // 位置が元のエリア外なら、隣接頂点のカーネルの共起性を考慮
-				location_diff += (roads.graph[neighbors[j]]->kernel.pt - polylines[j][polylines[j].size() - 1] - offsetPosOfVertex).length();
+				location_diff += (roads.graph[neighbors[j]]->kernel.pt - polylines[j].last() - offsetPosOfVertex).length();
 			}
 		}
 
@@ -692,7 +692,7 @@ void KDERoadGenerator::connectRoads(RoadGraph &roads, float dist_threshold, floa
 		if ((roads.graph[v_desc]->pt - roads.graph[e_desc]->polyLine[0]).lengthSquared() <= (roads.graph[v2_desc]->pt - roads.graph[e_desc]->polyLine[0]).lengthSquared()) {
 			step = roads.graph[e_desc]->polyLine[0] - roads.graph[e_desc]->polyLine[1];
 		} else {
-			step = roads.graph[e_desc]->polyLine[roads.graph[e_desc]->polyLine.size() - 1] - roads.graph[e_desc]->polyLine[roads.graph[e_desc]->polyLine.size() - 2];
+			step = roads.graph[e_desc]->polyLine.last() - roads.graph[e_desc]->polyLine[roads.graph[e_desc]->polyLine.size() - 2];
 		}
 		step = step.normalized() * 20.0f;
 
