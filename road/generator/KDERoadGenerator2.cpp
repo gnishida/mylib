@@ -257,8 +257,10 @@ bool KDERoadGenerator2::growRoadSegment(RoadGraph &roads, const Polygon2D &area,
 	}
 
 	if (!intersected) {
-		// 他の頂点のテリトリーに侵入したら、頂点生成、エッジ生成を却下する
-		if (RoadGeneratorHelper::invadingTerritory(roads, pt, srcDesc, roads.graph[srcDesc]->pt + edge.edge[edge.edge.size() - 1])) return false;
+		if (invadingCheck) {
+			// 他の頂点のテリトリーに侵入したら、頂点生成、エッジ生成を却下する
+			if (RoadGeneratorHelper::invadingTerritory(roads, pt, srcDesc, roads.graph[srcDesc]->pt + edge.edge[edge.edge.size() - 1])) return false;
+		}
 
 		// 頂点を追加
 		RoadVertexPtr v = RoadVertexPtr(new RoadVertex(pt));
