@@ -24,11 +24,11 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	end = clock();
 	std::cout << "Elapsed time for extracting only the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 	start = clock();
-	//GraphUtil::clean(temp_roads);
+	GraphUtil::clean(temp_roads);
 	end = clock();
 	std::cout << "Elapsed time for cleaning the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 	start = clock();
-	//GraphUtil::reduce(temp_roads);
+	GraphUtil::reduce(temp_roads);
 	end = clock();
 	std::cout << "Elapsed time for reducing the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 
@@ -41,7 +41,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	end = clock();
 	std::cout << "Elapsed time for removing links: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 	start = clock();
-	//GraphUtil::reduce(temp_roads);
+	GraphUtil::reduce(temp_roads);
 	end = clock();
 	std::cout << "Elapsed time for reducing links: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 	GraphUtil::removeIsolatedVertices(temp_roads);
