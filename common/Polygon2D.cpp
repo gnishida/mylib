@@ -244,3 +244,12 @@ QVector2D Polygon2D::getOBB(const QVector2D& dir, Polygon2D& obb) const {
 	return size;
 }
 
+boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > Polygon2D::convertToBoostPolygon() const {
+	boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > ret;
+
+	for (int i = 0; i < size(); ++i) {
+		ret.outer().push_back(boost::geometry::model::d2::point_xy<double>(at(i).x(), at(i).y()));
+	}
+
+	return ret;
+}

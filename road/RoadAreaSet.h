@@ -16,6 +16,8 @@ public:
 	void add(const RoadArea &area);
 	void clear();
 	void remove(int index);
+	bool contains(const QVector2D &pt) const;
+	Polygon2D unionArea() const;
 
 	void setZ(float z);
 

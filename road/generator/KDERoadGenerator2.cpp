@@ -6,7 +6,7 @@
 #include "KDERoadGenerator2.h"
 #include "RoadGeneratorHelper.h"
 
-void KDERoadGenerator2::generateRoadNetwork(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, bool addAvenuesOnBoundary, int numIterations, bool isGenerateLocalStreets) {
+void KDERoadGenerator2::generateRoadNetwork(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, bool invadingCheck, float weightEdge, float weightLocation, float weightRepetition, bool addAvenuesOnBoundary, int numIterations, bool isGenerateLocalStreets) {
 	srand(12345);
 
 	std::list<RoadVertexDesc> seeds;
@@ -24,7 +24,7 @@ void KDERoadGenerator2::generateRoadNetwork(RoadGraph &roads, const Polygon2D &a
 
 			std::cout << "attemptExpansion (avenue): " << i << " (Seed: " << desc << ")" << std::endl;
 			//if (i == 17) break;
-			attemptExpansion(roads, area, desc, RoadEdge::TYPE_AVENUE, kf, seeds);
+			attemptExpansion(roads, area, desc, RoadEdge::TYPE_AVENUE, kf, invadingCheck, weightEdge, weightLocation, weightRepetition, seeds);
 		}
 
 		// clean up
@@ -57,7 +57,7 @@ void KDERoadGenerator2::generateRoadNetwork(RoadGraph &roads, const Polygon2D &a
 
 		std::cout << "attemptExpansion (street): " << i << std::endl;
 		//if (i == 3) break;
-		attemptExpansion(roads, area, desc, RoadEdge::TYPE_STREET, kf, seeds);
+		attemptExpansion(roads, area, desc, RoadEdge::TYPE_STREET, kf, invadingCheck, weightEdge, weightLocation, weightRepetition, seeds);
 	}
 
 	// isolated edgeを削除
@@ -147,18 +147,18 @@ void KDERoadGenerator2::addAvenueSeed(RoadGraph &roads, const Polygon2D &area, c
 void KDERoadGenerator2::generateStreetSeeds(RoadGraph &roads, const Polygon2D &area, const KDEFeature& f, std::list<RoadVertexDesc>& seeds) {
 }
 
-void KDERoadGenerator2::attemptExpansion(RoadGraph &roads, const Polygon2D &area, RoadVertexDesc &srcDesc, int roadType, const KDEFeature& f, std::list<RoadVertexDesc> &seeds) {
+void KDERoadGenerator2::attemptExpansion(RoadGraph &roads, const Polygon2D &area, RoadVertexDesc &srcDesc, int roadType, const KDEFeature& f, bool invadingCheck, float weightEdge, float weightLocation, float weightRepetition, std::list<RoadVertexDesc> &seeds) {
 	QVector2D center = area.centroid();
 
 	KDEFeatureItem item = roads.graph[srcDesc]->kernel;
 	if (item.id == -1) {
-		item = getItem(roads, area, f, roadType, srcDesc);
+		item = getItem(roads, area, f, roadType, srcDesc, weightEdge, weightLocation, weightRepetition);
 		//KDEFeatureItem item = getItem2(roads, area, f, roadType, srcDesc);//, roads.graph[srcDesc]->pt - center);
 		roads.graph[srcDesc]->kernel = item;
 	}
 	
 	for (int i = 0; i < item.edges.size(); ++i) {
-		growRoadSegment(roads, area, srcDesc, roadType, f, item.edges[i], seeds);
+		growRoadSegment(roads, area, srcDesc, roadType, f, item.edges[i], invadingCheck, weightEdge, weightLocation, weightRepetition, seeds);
 	}
 }
 
@@ -166,7 +166,7 @@ void KDERoadGenerator2::attemptExpansion(RoadGraph &roads, const Polygon2D &area
  * 指定されたpolylineに従って、srcDesc頂点からエッジを伸ばす。
  * シードとして追加された場合は、trueを返却する
  */
-bool KDERoadGenerator2::growRoadSegment(RoadGraph &roads, const Polygon2D &area, RoadVertexDesc &srcDesc, int roadType, const KDEFeature& f, const KDEFeatureItemEdge &edge, std::list<RoadVertexDesc> &seeds) {
+bool KDERoadGenerator2::growRoadSegment(RoadGraph &roads, const Polygon2D &area, RoadVertexDesc &srcDesc, int roadType, const KDEFeature& f, const KDEFeatureItemEdge &edge, bool invadingCheck, float weightEdge, float weightLocation, float weightRepetition, std::list<RoadVertexDesc> &seeds) {
 	RoadVertexDesc tgtDesc;
 	RoadVertexDesc snapDesc;
 
@@ -240,6 +240,7 @@ bool KDERoadGenerator2::growRoadSegment(RoadGraph &roads, const Polygon2D &area,
 			if (!outside && !area.contains(pt)) {
 				// エリア外周との交点を求める
 				area.intersects(roads.graph[srcDesc]->pt, pt, outsidePt);
+				pt = outsidePt;
 				outside = true;
 				toBeSeed = false;
 			}
@@ -288,7 +289,7 @@ bool KDERoadGenerator2::growRoadSegment(RoadGraph &roads, const Polygon2D &area,
 		// 追加した頂点に、カーネルを割り当てる
 		//QVector2D offsetPos = roads.graph[srcDesc]->kernel.pt + roads.graph[tgtDesc]->pt - roads.graph[srcDesc]->pt;
 		//std::reverse(polyline.begin(), polyline.end());
-		roads.graph[tgtDesc]->kernel = getItem(roads, area, f, roadType, tgtDesc);
+		roads.graph[tgtDesc]->kernel = getItem(roads, area, f, roadType, tgtDesc, weightEdge, weightLocation, weightRepetition);
 	}
 
 	return true;
@@ -301,7 +302,7 @@ bool KDERoadGenerator2::growRoadSegment(RoadGraph &roads, const Polygon2D &area,
  * @param roadType				道路タイプ
  * @param offsetPosOfVertex		与えられた頂点の、このエリアの中心からのオフセット位置
  */
-KDEFeatureItem KDERoadGenerator2::getItem(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, int roadType, RoadVertexDesc v_desc) {
+KDEFeatureItem KDERoadGenerator2::getItem(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, int roadType, RoadVertexDesc v_desc, float weightEdge, float weightLocation, float weightRepetition) {
 	// 与えられた頂点の、このエリアの中心からのオフセット位置を計算
 	QVector2D offsetPosOfVertex = roads.graph[v_desc]->pt - area.centroid();
 
@@ -348,9 +349,9 @@ KDEFeatureItem KDERoadGenerator2::getItem(RoadGraph &roads, const Polygon2D &are
 	}
 
 	// 各カーネルについて、非類似度スコアを計算する
-	float edge_weight = 1.0f;
-	float location_weight = 1.0f;
-	float repetition_weight = 2000000.0f;
+	//float edge_weight = 1.0f;
+	//float location_weight = 1.0f;
+	//float repetition_weight = 2000000.0f;
 
 	float min_diff = std::numeric_limits<float>::max();
 	int min_index = -1;
@@ -369,16 +370,21 @@ KDEFeatureItem KDERoadGenerator2::getItem(RoadGraph &roads, const Polygon2D &are
 
 		// 位置の非類似度を計算
 		float location_diff = 0.0f;
-		if (kf.area().contains(offsetPosOfVertex)) { // 位置が元のエリア内なら
-			location_diff += (kf.items(roadType)[i].pt - offsetPosOfVertex).length();
-		} else {
+		//if (kf.area().contains(offsetPosOfVertex)) { // 位置が元のエリア内なら
+		//	location_diff += (kf.items(roadType)[i].pt - offsetPosOfVertex).length();
+		//} else {
 			for (int j = 0; j < neighbors.size(); ++j) { // 位置が元のエリア外なら、隣接頂点のカーネルの共起性を考慮
 				location_diff += (roads.graph[neighbors[j]]->kernel.pt - polylines[j].last() + polylines[j][0] - kf.items(roadType)[i].pt).length();
 			}
-		}
+		//}
 
 		// フィッティングスコアを計算
-		float diff = edge_diff * edge_weight + location_diff * location_weight + repetition * repetition_weight;
+		float diff;
+		if (kf.area().contains(offsetPosOfVertex)) { // 位置が元のエリア内なら
+			diff = location_diff;
+		} else {
+			diff = edge_diff * weightEdge + location_diff * weightLocation + repetition * weightRepetition;
+		}
 		if (diff < min_diff) {
 			min_diff = diff;
 			min_index = i;
@@ -480,7 +486,7 @@ void KDERoadGenerator2::connectAvenues(RoadGraph &roads, float threshold) {
 /**
  * 境界上の頂点を延長し、近くのエッジにぶつける
  */
-void KDERoadGenerator2::connectRoads(RoadGraph &roads, float dist_threshold, float angle_threshold) {
+void KDERoadGenerator2::connectRoads(RoadGraph &roads, RoadAreaSet &areas, float dist_threshold, float angle_threshold) {
 	// 境界上の頂点、エッジの組をリストアップする
 	QList<RoadVertexDesc> boundaryNodes;
 	QMap<RoadVertexDesc, RoadEdgeDesc> boundaryEdges;
@@ -503,6 +509,7 @@ void KDERoadGenerator2::connectRoads(RoadGraph &roads, float dist_threshold, flo
 		}
 	}
 
+	// リストアップしたエッジを、それぞれ少しずつ伸ばしていき、他のエッジにぶつかったらストップする
 	int numIterations = 1000;
 	while (!boundaryNodes.empty() && numIterations >= 0) {
 		RoadVertexDesc v_desc = boundaryNodes.front();
@@ -527,6 +534,10 @@ void KDERoadGenerator2::connectRoads(RoadGraph &roads, float dist_threshold, flo
 
 		numIterations--;
 	}
+
+	// 生成された道路網を、エリアのunionで切り取る。つまり、エリアのunionの外側のエッジは切り捨てられる。
+	//Polygon2D union_area = areas.unionArea();
+	//GraphUtil::extractRoads2(roads, union_area);
 
 	GraphUtil::clean(roads);
 }

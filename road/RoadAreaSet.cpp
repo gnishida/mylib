@@ -1,4 +1,7 @@
-﻿#include "RoadAreaSet.h"
+﻿#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+#include "RoadAreaSet.h"
 #include "GraphUtil.h"
 
 const size_t RoadAreaSet::size() const {
@@ -20,6 +23,42 @@ void RoadAreaSet::clear() {
 
 void RoadAreaSet::remove(int index) {
 	areas.erase(areas.begin() + index);
+}
+
+bool RoadAreaSet::contains(const QVector2D &pt) const {
+	for (int i = 0; i < areas.size(); ++i) {
+		if (areas[i].area.contains(pt)) return true;
+	}
+
+	return false;
+}
+
+Polygon2D RoadAreaSet::unionArea() const {
+	Polygon2D ret;
+	if (areas.size() == 0) return ret;
+	
+	std::vector<boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > > output;
+	for (int i = 0; i < areas.size(); ++i) {
+		boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > temp;
+
+		if (output.size() > 0) {
+			for (int j = 0; j < output[0].outer().size(); ++j) {
+				temp.outer().push_back(output[0].outer()[j]);
+			}
+		}
+
+		output.clear();
+		
+		//Polygon2D temp;
+		boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > b = areas[i].area.convertToBoostPolygon();
+		boost::geometry::union_(temp, b, output);
+	}
+
+	for (int i = 0; i < output[0].outer().size(); ++i) {
+		ret.push_back(QVector2D(output[0].outer()[i].x(), output[0].outer()[i].y()));
+	}
+
+	return ret;
 }
 
 void RoadAreaSet::setZ(float z) {

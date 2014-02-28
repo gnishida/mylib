@@ -678,6 +678,7 @@ void KDERoadGenerator::connectRoads(RoadGraph &roads, float dist_threshold, floa
 		}
 	}
 
+	// リストアップしたエッジを、それぞれ少しずつ伸ばしていき、他のエッジにぶつかったらストップする
 	int numIterations = 1000;
 	while (!boundaryNodes.empty() && numIterations >= 0) {
 		RoadVertexDesc v_desc = boundaryNodes.front();

@@ -39,6 +39,8 @@ public:
 	std::vector<Polygon2D> tessellate();
 	QVector2D getOBB(Polygon2D &obb) const;
 	QVector2D getOBB(const QVector2D& dir, Polygon2D& obb) const;
+
+	boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double> > convertToBoostPolygon() const;
 };
 
 /**

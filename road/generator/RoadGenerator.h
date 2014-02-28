@@ -10,7 +10,7 @@ public:
 	RoadGenerator() {}
 	~RoadGenerator() {}
 
-	void generateRoadNetwork(RoadGraph& roads, const Polygon2D &area, const RoadFeature& rf, bool addAvenuesOnBoundary = false, int numIterations = 0, bool isGenerateLocalStreets = true);
+	void generateRoadNetwork(RoadGraph& roads, const Polygon2D &area, const RoadFeature& rf, bool invadingCheck, float weightEdge, float weightLocation, float weightRepetition, bool addAvenuesOnBoundary = false, int numIterations = 0, bool isGenerateLocalStreets = true);
 
 private:
 };

@@ -228,7 +228,7 @@ bool RoadGeneratorHelper::invadingTerritory(RoadGraph &roads, const QVector2D &p
 		if (roads.graph[*vi]->kernel.id == -1) continue;
 
 		// 誤差により、テリトリーに入っていると判断されてしまうのを防ぐため、0.9fをかける。
-		if ((roads.graph[*vi]->pt - pt).lengthSquared() < roads.graph[*vi]->kernel.territory * roads.graph[*vi]->kernel.territory * 0.9f) {
+		if ((roads.graph[*vi]->pt - pt).lengthSquared() < roads.graph[*vi]->kernel.territory * roads.graph[*vi]->kernel.territory * 0.81f) {
 			// 対象となる頂点方向へ、エッジが伸びていない場合（角度が15度より大きい）は、「侵入」と判断する
 			if (Util::diffAngle(roads.graph[*vi]->pt - pt, targetPt - pt) > M_PI * 15.0f / 180.0f) return true;
 
