@@ -183,6 +183,9 @@ float GridFeature::generateLength(int dir, float uniform_random_number) const {
 	return 0.0f;
 }
 
+void GridFeature::rotate(float deg) {
+}
+
 /**
  * ファイルから、グリッドの特徴量を読込む。
  */

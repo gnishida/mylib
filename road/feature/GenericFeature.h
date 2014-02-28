@@ -36,6 +36,8 @@ public:
 	float generateLength(int roadType, float uniform_random_number) const;
 	int getDirections(int roadType) const;
 
+	void rotate(float deg);
+
 	void load(QString filename);
 	void load(QDomNode& node);
 	void loadAvenue(QDomNode& node);

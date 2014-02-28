@@ -12,6 +12,8 @@ public:
 	//void translate(float x, float y);
 	const QVector2D & last() const;
 	QVector2D & last();
+
+	void rotate(float angle, const QVector2D &orig);
 };
 
 /**

@@ -19,13 +19,16 @@ public:
 	static float pointSegmentDistanceXY(const QVector2D& a, const QVector2D& b, const QVector2D& c, QVector2D& closestPtInAB);
 
 	static bool leftTurn(const QVector2D& a, const QVector2D& b, const QVector2D& c);
-	static bool Util::leftTurn(const QVector2D& v1, const QVector2D& v2);
+	static bool leftTurn(const QVector2D& v1, const QVector2D& v2);
 
 	// 角度関係
+	static float deg2rad(float deg);
 	static float rad2deg(float rad);
 	static float normalizeAngle(float angle);
 	static float diffAngle(const QVector2D& dir1, const QVector2D& dir2, bool absolute = true);
 	static float diffAngle(float angle1, float angle2, bool absolute = true);
+	static QVector2D rotate(const QVector2D &pt, float rad);
+	static QVector2D rotate(const QVector2D &pt, float rad, const QVector2D &orig);
 
 	// 乱数関係
 	static float uniform_rand();

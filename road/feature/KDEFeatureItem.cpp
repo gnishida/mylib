@@ -1,6 +1,7 @@
 ﻿#include <QFile>
 #include <QDomDocument>
 #include <QTextStream>
+#include "../../common/Util.h"
 #include "KDEFeatureItem.h"
 
 void KDEFeatureItem::addEdge(const Polyline2D &polyline, bool deadend) {
@@ -28,6 +29,17 @@ float KDEFeatureItem::getMinDistance(const Polyline2D &polyline) const {
 	}
 
 	return sqrtf(min_dist2);
+}
+
+/**
+ * 指定された角度[degree]だけ、交差点カーネルを時計回りに回転する。
+ */
+void KDEFeatureItem::rotate(float deg, const QVector2D &orig) {
+	pt = Util::rotate(pt, -Util::deg2rad(deg), orig);
+
+	for (int i = 0; i < edges.size(); ++i) {
+		edges[i].edge.rotate(deg, orig);
+	}
 }
 
 void KDEFeatureItem::load(QDomNode& node) {

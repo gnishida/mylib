@@ -19,6 +19,8 @@ public:
 	RadialFeature(int group_id);
 	~RadialFeature() {}
 
+	void rotate(float deg);
+
 	void load(QString filename);
 	void load(QDomNode& node);
 	void save(QString filename);

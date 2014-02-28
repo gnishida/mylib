@@ -1,5 +1,6 @@
 ﻿#include <QDomDocument>
 #include <QTextStream>
+#include "../../common/Util.h"
 #include "KDEFeature.h"
 
 KDEFeature::KDEFeature() : AbstractFeature() {
@@ -52,6 +53,22 @@ const float KDEFeature::density(int roadType) const {
 		return _streetDensity;
 	default:
 		return _streetDensity;
+	}
+}
+
+/**
+ * 指定された角度[degree]だけ、交差点カーネルを時計回りに回転する。
+ */
+void KDEFeature::rotate(float deg) {
+	QVector2D centroid = _area.centroid();
+	_area.rotate(deg, centroid);
+
+	for (int i = 0; i < _avenueItems.size(); ++i) {
+		_avenueItems[i].rotate(deg, centroid);
+	}
+
+	for (int i = 0; i < _streetItems.size(); ++i) {
+		_streetItems[i].rotate(deg, centroid);
 	}
 }
 

@@ -26,6 +26,8 @@ public:
 	void addEdge(const Polyline2D &polyline, bool deadend);
 	float getMinDistance(const Polyline2D &polyline) const;
 
+	void rotate(float orientation, const QVector2D &orig);
+
 	void load(QDomNode& node);
 	void save(QDomDocument& doc, QDomNode& node);
 };

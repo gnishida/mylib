@@ -34,6 +34,7 @@ public:
 	void translate(float x, float y, Polygon2D &ret) const;
 	void rotate(float angle);
 	void rotate(float angle, Polygon2D &ret) const;
+	void rotate(float angle, const QVector2D &orig);
 
 	std::vector<Polygon2D> tessellate();
 	QVector2D getOBB(Polygon2D &obb) const;

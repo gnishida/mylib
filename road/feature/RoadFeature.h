@@ -25,5 +25,7 @@ public:
 	void addFeature(AbstractFeaturePtr feature);
 
 	void normalize();
+
+	void rotate(float deg);
 };
 

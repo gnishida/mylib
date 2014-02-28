@@ -93,3 +93,9 @@ void RoadFeature::normalize() {
 	}
 }
 
+void RoadFeature::rotate(float deg) {
+	for (int i = 0; i < features.size(); ++i) {
+		features[i]->rotate(deg);
+	}
+}
+

@@ -169,8 +169,12 @@ bool Util::leftTurn(const QVector2D& v1, const QVector2D& v2) {
 	else return false;
 }
 
+float Util::deg2rad(float deg) {
+	return M_PI * deg / 180.0f;
+}
+
 float Util::rad2deg(float rad) {
-	return ((rad*180.0f) / M_PI);
+	return rad * 180.0f / M_PI;
 }
 
 /**
@@ -215,6 +219,25 @@ float Util::diffAngle(float angle1, float angle2, bool absolute) {
 	} else {
 		return normalizeAngle(angle1 - angle2);
 	}
+}
+
+/**
+ * 指定された点を、反時計回りにrad回転させた位置を返却する。
+ */
+QVector2D Util::rotate(const QVector2D &pt, float rad) {
+	QVector2D ret;
+
+	ret.setX(cosf(rad) * pt.x() - sinf(rad) * pt.y());
+	ret.setY(sinf(rad) * pt.x() + cosf(rad) * pt.y());
+
+	return ret;
+}
+
+/**
+ * 指定された点を、反時計回りにrad回転させた位置を返却する。
+ */
+QVector2D Util::rotate(const QVector2D &pt, float rad, const QVector2D &orig) {
+	return rotate(pt - orig, rad) + orig;
 }
 
 float Util::uniform_rand() {

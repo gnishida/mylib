@@ -28,6 +28,8 @@ public:
 	const Polygon2D& area() const;
 	void setArea(const Polygon2D &area);
 
+	virtual void rotate(float deg) = 0;
+
 	virtual void load(QDomNode& node) = 0;
 	virtual void save(QDomDocument& doc, QDomNode& node) = 0;
 

@@ -27,6 +27,8 @@ public:
 	const std::vector<KDEFeatureItem>& items(int roadType) const;
 	const float density(int roadType) const;
 
+	void rotate(float deg);
+
 	void load(QDomNode& node);
 	void loadAvenue(QDomNode& node);
 	void loadStreet(QDomNode& node);

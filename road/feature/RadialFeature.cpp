@@ -10,6 +10,9 @@ RadialFeature::RadialFeature(int group_id) : AbstractFeature() {
 	numDirections = 0;
 }
 
+void RadialFeature::rotate(float deg) {
+}
+
 /**
  * ファイルから、Radialパターンの特徴量を読込む。
  */

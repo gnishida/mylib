@@ -116,6 +116,18 @@ void Polygon2D::rotate(float angle, Polygon2D &ret) const {
 }
 
 /**
+ * 指定された点を中心に、指定された角度だけ時計回りに回転したポリゴンを返却する。
+ *
+ * @param angle		時計回りの回転角度[degree]
+ * @param orig		回転中心
+ */
+void Polygon2D::rotate(float angle, const QVector2D &orig) {
+	translate(-orig.x(), -orig.y());
+	rotate(angle);
+	translate(orig.x(), orig.y());
+}
+
+/**
  * このポリゴンを三角形または凸四角形の集合に分割する。
  * 各図形の頂点は、openでCCWオーダである。
  */

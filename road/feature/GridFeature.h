@@ -40,6 +40,8 @@ public:
 	std::vector<float> getLengths() const;
 	float generateLength(int dir, float uniform_random_number) const;
 
+	void rotate(float deg);
+
 	void load(QString filename);
 	void load(QDomNode& node);
 	void save(QString filename);

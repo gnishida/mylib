@@ -190,6 +190,9 @@ int GenericFeature::getDirections(int roadType) const {
 	return 0;
 }
 
+void GenericFeature::rotate(float deg) {
+}
+
 /**
  * ファイルから、グリッドの特徴量を読込む。
  */
