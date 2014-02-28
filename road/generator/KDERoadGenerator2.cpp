@@ -535,10 +535,6 @@ void KDERoadGenerator2::connectRoads(RoadGraph &roads, RoadAreaSet &areas, float
 		numIterations--;
 	}
 
-	// 生成された道路網を、エリアのunionで切り取る。つまり、エリアのunionの外側のエッジは切り捨てられる。
-	//Polygon2D union_area = areas.unionArea();
-	//GraphUtil::extractRoads2(roads, union_area);
-
 	GraphUtil::clean(roads);
 }
 
