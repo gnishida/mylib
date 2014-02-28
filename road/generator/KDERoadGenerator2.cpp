@@ -256,6 +256,9 @@ bool KDERoadGenerator2::growRoadSegment(RoadGraph &roads, const Polygon2D &area,
 	}
 
 	if (!intersected) {
+		// 他の頂点のテリトリーに侵入したら、頂点生成、エッジ生成を却下する
+		if (RoadGeneratorHelper::invadingTerritory(roads, pt, srcDesc, roads.graph[srcDesc]->pt + edge.edge[edge.edge.size() - 1])) return false;
+
 		// 頂点を追加
 		RoadVertexPtr v = RoadVertexPtr(new RoadVertex(pt));
 		tgtDesc = GraphUtil::addVertex(roads, v);
@@ -266,9 +269,6 @@ bool KDERoadGenerator2::growRoadSegment(RoadGraph &roads, const Polygon2D &area,
 	}
 
 	if (GraphUtil::hasEdge(roads, srcDesc, tgtDesc)) return false;
-
-	// 他の頂点のテリトリーに侵入したら、エッジ生成を却下する
-	if (RoadGeneratorHelper::invadingTerritory(roads, pt, srcDesc, roads.graph[srcDesc]->pt + edge.edge[edge.edge.size() - 1])) return false;
 
 	// エッジを追加
 	RoadEdgeDesc e = GraphUtil::addEdge(roads, srcDesc, tgtDesc, roadType, 1);
