@@ -24,11 +24,11 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	end = clock();
 	std::cout << "Elapsed time for extracting only the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 	start = clock();
-	GraphUtil::clean(temp_roads);
+	//GraphUtil::clean(temp_roads);
 	end = clock();
 	std::cout << "Elapsed time for cleaning the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 	start = clock();
-	GraphUtil::reduce(temp_roads);
+	//GraphUtil::reduce(temp_roads);
 	end = clock();
 	std::cout << "Elapsed time for reducing the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 
@@ -41,9 +41,10 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	end = clock();
 	std::cout << "Elapsed time for removing links: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 	start = clock();
-	GraphUtil::reduce(temp_roads);
+	//GraphUtil::reduce(temp_roads);
 	end = clock();
 	std::cout << "Elapsed time for reducing links: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
+	GraphUtil::removeIsolatedVertices(temp_roads);
 	start = clock();
 	GraphUtil::clean(temp_roads);
 	end = clock();
@@ -62,7 +63,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 		num_vertices++;
 
 		// エッジの数が2以下なら、スキップ
-		if (GraphUtil::getNumEdges(temp_roads, *vi) <= 2) continue;
+		//if (GraphUtil::getNumEdges(temp_roads, *vi) <= 2) continue;
 
 		// 頂点の座標の、エリア中心からのオフセットを登録
 		KDEFeatureItem item(id);
@@ -119,6 +120,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	GraphUtil::removeLinkEdges(temp_roads);
 	end = clock();
 	std::cout << "Elapsed time for removing links: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
+	GraphUtil::removeIsolatedVertices(temp_roads);
 	start = clock();
 	GraphUtil::clean(temp_roads);
 	end = clock();
