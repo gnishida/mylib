@@ -46,6 +46,7 @@ public:
 	static void getOrderedPolyLine(RoadGraph& roads, RoadEdgeDesc e, std::vector<QVector2D>& polyline);
 	static void orderPolyLine(RoadGraph& roads, RoadEdgeDesc e, RoadVertexDesc src);
 	static void moveEdge(RoadGraph& roads, RoadEdgeDesc e, QVector2D& src_pos, QVector2D& tgt_pos);
+	static void movePolyline(RoadGraph& roads, Polyline2D &polyline, const QVector2D& src_pos, const QVector2D& tgt_pos);
 	static bool removeDeadEnd(RoadGraph& roads);
 	static void removeIsolatedEdges(RoadGraph& roads, bool onlyValidEdge = true);
 	static RoadVertexDesc splitEdge(RoadGraph &roads, RoadEdgeDesc edge_desc, const QVector2D& pt);

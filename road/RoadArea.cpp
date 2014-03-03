@@ -15,6 +15,7 @@ RoadArea::~RoadArea() {
  */
 void RoadArea::load(QDomNode& node) {
 	area.clear();
+	roads.clear();
 
 	QDomNode child = node.firstChild();
 	while (!child.isNull()) {

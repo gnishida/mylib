@@ -649,6 +649,20 @@ void GraphUtil::moveEdge(RoadGraph& roads, RoadEdgeDesc e, QVector2D& src_pos, Q
 	roads.setModified();
 }
 
+void GraphUtil::movePolyline(RoadGraph& roads, Polyline2D &polyline, const QVector2D& src_pos, const QVector2D& tgt_pos) {
+	int n = polyline.size();
+
+	QVector2D src_diff = src_pos - polyline[0];
+	QVector2D tgt_diff = tgt_pos - polyline.last();
+
+	for (int i = 1; i < n - 1; i++) {
+		polyline[i] += src_diff + (tgt_diff - src_diff) * (float)i / (float)(n - 1);
+	}
+
+	polyline[0] = src_pos;
+	polyline[n - 1] = tgt_pos;
+}
+
 /**
  * Remove all the dead-end edges.
  */

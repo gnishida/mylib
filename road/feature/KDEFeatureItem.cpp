@@ -18,6 +18,8 @@ float KDEFeatureItem::getMinDistance(const Polyline2D &polyline) const {
 	float min_dist2 = std::numeric_limits<float>::max();
 
 	for (int i = 0; i < edges.size(); ++i) {
+		if (edges[i].edge.size() == 0) continue;
+
 		// 頂点から、エッジのもう一方の端へのベクトルを計算する
 		QVector2D dir1 = edges[i].edge.last();
 		QVector2D dir2 = polyline.last() - polyline[0];

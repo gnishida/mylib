@@ -22,6 +22,7 @@ private:
 	static bool growRoadSegment(RoadGraph &roads, const Polygon2D &area, RoadVertexDesc &srcDesc, int roadType, const KDEFeature& f, const KDEFeatureItemEdge &edge, bool invadingCheck, float weightEdge, float weightLocation, float weightRepetition, std::list<RoadVertexDesc> &seeds);
 
 	static KDEFeatureItem getItem(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, int roadType, RoadVertexDesc v_desc, float weightEdge, float weightLocation, float weightRepetition);
+	static KDEFeatureItem getItem2(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, int roadType, RoadVertexDesc v_desc, float weightEdge, float weightLocation, float weightRepetition);
 
 	static void connectAvenues(RoadGraph &roads, float threshold);
 	

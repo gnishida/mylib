@@ -152,8 +152,7 @@ void KDERoadGenerator2::attemptExpansion(RoadGraph &roads, const Polygon2D &area
 
 	KDEFeatureItem item = roads.graph[srcDesc]->kernel;
 	if (item.id == -1) {
-		item = getItem(roads, area, f, roadType, srcDesc, weightEdge, weightLocation, weightRepetition);
-		//KDEFeatureItem item = getItem2(roads, area, f, roadType, srcDesc);//, roads.graph[srcDesc]->pt - center);
+		item = getItem2(roads, area, f, roadType, srcDesc, weightEdge, weightLocation, weightRepetition);
 		roads.graph[srcDesc]->kernel = item;
 	}
 	
@@ -291,7 +290,7 @@ bool KDERoadGenerator2::growRoadSegment(RoadGraph &roads, const Polygon2D &area,
 		// 追加した頂点に、カーネルを割り当てる
 		//QVector2D offsetPos = roads.graph[srcDesc]->kernel.pt + roads.graph[tgtDesc]->pt - roads.graph[srcDesc]->pt;
 		//std::reverse(polyline.begin(), polyline.end());
-		roads.graph[tgtDesc]->kernel = getItem(roads, area, f, roadType, tgtDesc, weightEdge, weightLocation, weightRepetition);
+		roads.graph[tgtDesc]->kernel = getItem2(roads, area, f, roadType, tgtDesc, weightEdge, weightLocation, weightRepetition);
 	}
 
 	return true;
@@ -386,6 +385,93 @@ KDEFeatureItem KDERoadGenerator2::getItem(RoadGraph &roads, const Polygon2D &are
 			diff = location_diff;
 		} else {
 			diff = edge_diff * weightEdge + location_diff * weightLocation + repetition * weightRepetition;
+		}
+		if (diff < min_diff) {
+			min_diff = diff;
+			min_index = i;
+		}
+	}
+
+	KDEFeatureItem item = kf.items(roadType)[min_index];
+
+	// 与えられたエッジの方向に近いエッジを削除する
+	for (int j = 0; j < polylines.size(); ++j) {
+		float min_angle = std::numeric_limits<float>::max();
+		int min_edge_index = -1;
+		for (int i = 0; i < item.edges.size(); ++i) {
+			float angle = Util::diffAngle(item.edges[i].edge[0], polylines[j][1] - polylines[j][0]);
+			if (angle < min_angle) {
+				min_angle = angle;
+				min_edge_index = i;
+			}
+		}
+		if (min_angle < 0.6f) {
+			item.edges.erase(item.edges.begin() + min_edge_index);
+		}
+	}
+
+	return item;
+}
+
+/**
+ * 与えられたエッジの方向、長さを含むデータを検索し、近いものを返却する。
+ * 繰り返しを防ぐために、モジュラを実装。
+ *
+ * @param kf					特徴量
+ * @param roadType				道路タイプ
+ * @param offsetPosOfVertex		与えられた頂点の、このエリアの中心からのオフセット位置
+ */
+KDEFeatureItem KDERoadGenerator2::getItem2(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, int roadType, RoadVertexDesc v_desc, float weightEdge, float weightLocation, float weightRepetition) {
+	// 与えられた頂点の、このエリアの中心からのオフセット位置を計算
+	QVector2D offsetPosOfVertex = roads.graph[v_desc]->pt - area.centroid();
+
+	// 当該頂点から出るエッジをリストアップする
+	QList<Polyline2D> polylines;
+	QList<RoadVertexDesc> neighbors;
+	RoadOutEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::out_edges(v_desc, roads.graph); ei != eend; ++ei) {
+		if (!roads.graph[*ei]->valid) continue;
+
+		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+		neighbors.push_back(tgt);
+
+		if ((roads.graph[v_desc]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared() > (roads.graph[tgt]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared()) {
+			std::reverse(roads.graph[*ei]->polyLine.begin(), roads.graph[*ei]->polyLine.end());
+		}
+		polylines.push_back(roads.graph[*ei]->polyLine);
+	}
+
+	// 各カーネルについて、非類似度スコアを計算する
+	//float edge_weight = 1.0f;
+	//float location_weight = 1.0f;
+
+	float min_diff = std::numeric_limits<float>::max();
+	int min_index = -1;
+	for (int i = 0; i < kf.items(roadType).size(); ++i) {
+		// エッジの非類似度を計算
+		float edge_diff = 0.0f;
+		for (int j = 0; j < polylines.size(); ++j) {
+			edge_diff += kf.items(roadType)[i].getMinDistance(polylines[j]);
+		}		
+
+		// 位置の非類似度を計算
+		float location_diff = 0.0f;
+		//if (kf.area().contains(offsetPosOfVertex)) { // 位置が元のエリア内なら
+		//	location_diff += (kf.items(roadType)[i].pt - offsetPosOfVertex).length();
+		//} else {
+			for (int j = 0; j < neighbors.size(); ++j) { // 位置が元のエリア外なら、隣接頂点のカーネルの共起性を考慮
+				QVector2D pt = RoadGeneratorHelper::modulo(kf.area(), roads.graph[neighbors[j]]->kernel.pt - polylines[j].last() + polylines[j][0]);
+
+				location_diff += (pt - kf.items(roadType)[i].pt).length();
+			}
+		//}
+
+		// フィッティングスコアを計算
+		float diff;
+		if (kf.area().contains(offsetPosOfVertex)) { // 位置が元のエリア内なら
+			diff = location_diff;
+		} else {
+			diff = edge_diff * weightEdge + location_diff * weightLocation;
 		}
 		if (diff < min_diff) {
 			min_diff = diff;

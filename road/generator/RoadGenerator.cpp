@@ -31,7 +31,7 @@ void RoadGenerator::generateRoadNetwork(RoadGraph& roads, const Polygon2D &area,
 		rg2.generateRoadNetwork(roads, area, dynamic_cast<RadialFeature&>(*rf.features[0]));
 		break;
 	case AbstractFeature::TYPE_KDE:
-		KDERoadGenerator2::generateRoadNetwork(roads, area, dynamic_cast<KDEFeature&>(*rf.features[0]), invadingCheck, weightEdge, weightLocation, weightRepetition, addAvenuesOnBoundary, numIterations, isGenerateLocalStreets);
+		KDERoadGenerator::generateRoadNetwork(roads, area, dynamic_cast<KDEFeature&>(*rf.features[0]), invadingCheck, weightEdge, weightLocation, weightRepetition, addAvenuesOnBoundary, numIterations, isGenerateLocalStreets);
 		break;
 	case AbstractFeature::TYPE_GENERIC:
 		rg4.generateRoadNetwork(roads, area, dynamic_cast<GenericFeature&>(*rf.features[0]));

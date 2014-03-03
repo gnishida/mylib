@@ -268,3 +268,84 @@ int RoadGeneratorHelper::getClosestItem(const KDEFeature &f, int roadType, const
 
 	return min_index;
 }
+
+/**
+ * 指定された頂点について、指定されたエッジに似たエッジが既に登録済みかどうかチェックする。
+ */
+bool RoadGeneratorHelper::isRedundantEdge(RoadGraph& roads, RoadVertexDesc v_desc, const Polyline2D &polyline) {
+	RoadOutEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = out_edges(v_desc, roads.graph); ei != eend; ++ei) {
+		if (!roads.graph[*ei]->valid) continue;
+
+		if (roads.graph[*ei]->polyLine.size() <= 1) continue;
+		if (polyline.size() <= 0) continue;
+
+		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+
+		Polyline2D edge = roads.graph[*ei]->polyLine;
+		if ((roads.graph[v_desc]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared() > (roads.graph[tgt]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared()) {
+			std::reverse(edge.begin(), edge.end());
+		}
+
+		for (int i = 1; i < 10; ++i) {
+			int index1 = (edge.size() - 1) * i / 10;
+			int index2 = polyline.size() * i/ 10;
+
+			if (index1 == 0) continue;
+
+			if (Util::diffAngle(edge[index1] - edge[0], polyline[index2]) < 0.3f) return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * エリアに対して、指定された位置のモジュラ位置を返却する。
+ */
+QVector2D RoadGeneratorHelper::modulo(const Polygon2D &area, const QVector2D &pt) {
+	QVector2D ret;
+
+	BBox bbox = area.envelope();
+
+	if (pt.x() < bbox.minPt.x()) {
+		ret.setX(bbox.maxPt.x() - (int)(bbox.minPt.x() - pt.x()) % (int)bbox.dx());
+	} else if (pt.x() > bbox.maxPt.x()) {
+		ret.setX(bbox.minPt.x() + (int)(pt.x() - bbox.maxPt.x()) % (int)bbox.dx());
+	} else {
+		ret.setX(pt.x());
+	}
+
+	if (pt.y() < bbox.minPt.y()) {
+		ret.setY(bbox.maxPt.y() - (int)(bbox.minPt.y() - pt.y()) % (int)bbox.dy());
+	} else if (pt.y() > bbox.maxPt.y()) {
+		ret.setY(bbox.minPt.y() + (int)(pt.y() - bbox.maxPt.y()) % (int)bbox.dy());
+	} else {
+		ret.setY(pt.y());
+	}
+
+	return ret;
+}
+
+void RoadGeneratorHelper::buildGraphFromKernel(RoadGraph& roads, const KDEFeatureItem &item, const QVector2D &offset) {
+	roads.clear();
+
+	RoadVertexPtr v = RoadVertexPtr(new RoadVertex(item.pt + offset));
+	RoadVertexDesc v_desc = GraphUtil::addVertex(roads, v);
+
+	for (int i = 0; i < item.edges.size(); ++i) {
+		RoadVertexPtr u = RoadVertexPtr(new RoadVertex(item.edges[i].edge.last()));
+		RoadVertexDesc u_desc = GraphUtil::addVertex(roads, u);
+
+		Polyline2D polyline;
+		polyline.push_back(roads.graph[v_desc]->pt);
+		for (int j = 0; j < item.edges[i].edge.size(); ++j) {
+			polyline.push_back(roads.graph[v_desc]->pt + item.edges[i].edge[j]);
+		}
+
+		RoadEdgeDesc e_desc = GraphUtil::addEdge(roads, v_desc, u_desc, 1, false);
+		roads.graph[e_desc]->polyLine = polyline;
+		roads.graph[e_desc]->color = QColor(192, 192, 255);
+		roads.graph[e_desc]->bgColor = QColor(0, 0, 192);
+	}
+}

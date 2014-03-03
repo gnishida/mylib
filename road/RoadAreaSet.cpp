@@ -128,7 +128,7 @@ void RoadAreaSet::save(QString filepath) {
 	QDomDocument doc;
 
 	QString roadFilename = name + ".gsm";
-	GraphUtil::saveRoads(roads, roadFilename);
+	GraphUtil::saveRoads(roads, filepath + ".gsm");
 
 	QDomElement root = doc.createElement("areas");
 	root.setAttribute("roads", roadFilename);

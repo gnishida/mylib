@@ -12,7 +12,7 @@ void Polygon2D::correct() {
 }
 
 float Polygon2D::area() const {
-	return boost::geometry::area(*this);
+	return fabs(boost::geometry::area(*this));
 }
 
 QVector2D Polygon2D::centroid() const {
