@@ -23,6 +23,7 @@ public:
 
 	void setDensity(int roadType, float density);
 	void addItem(int roadType, const KDEFeatureItem &item);
+	size_t numItems(int roadType) const;
 
 	const std::vector<KDEFeatureItem>& items(int roadType) const;
 	const float density(int roadType) const;

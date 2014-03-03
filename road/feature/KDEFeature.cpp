@@ -34,6 +34,14 @@ void KDEFeature::addItem(int roadType, const KDEFeatureItem &item) {
 	}
 }
 
+size_t KDEFeature::numItems(int roadType) const {
+	if (roadType == RoadEdge::TYPE_AVENUE) {
+		return _avenueItems.size();
+	} else {
+		return _streetItems.size();
+	}
+}
+
 const std::vector<KDEFeatureItem>& KDEFeature::items(int roadType) const {
 	switch (roadType) {
 	case RoadEdge::TYPE_AVENUE:

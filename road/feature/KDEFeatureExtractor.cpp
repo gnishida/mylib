@@ -1,11 +1,12 @@
 ﻿#include <time.h>
+#include "../../common/Util.h"
 #include "../GraphUtil.h"
 #include "KDEFeatureExtractor.h"
 
 /**
  * KDEベースでの特徴量を抽出する。
  */
-void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, RoadFeature& roadFeature) {
+void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, bool perturbation, bool rotation, RoadFeature& roadFeature) {
 	roadFeature.clear();
 
 	KDEFeaturePtr kf = KDEFeaturePtr(new KDEFeature(0));
@@ -50,51 +51,11 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	end = clock();
 	std::cout << "Elapsed time for cleaning the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 
-	start = clock();
-	int num_vertices = 0;
-	int id = 0;
-	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(temp_roads.graph); vi != vend; ++vi) {
-		if (!temp_roads.graph[*vi]->valid) continue;
-
-		// エリア外の頂点はスキップ
-		if (!area.contains(temp_roads.graph[*vi]->pt)) continue;
-
-		num_vertices++;
-
-		// エッジの数が2以下なら、スキップ
-		//if (GraphUtil::getNumEdges(temp_roads, *vi) <= 2) continue;
-
-		// 頂点の座標の、エリア中心からのオフセットを登録
-		KDEFeatureItem item(id);
-		item.pt = temp_roads.graph[*vi]->pt - center;
-
-		// 近接頂点までの距離を登録
-		RoadVertexDesc nearestVertexDesc = GraphUtil::getVertex(temp_roads, temp_roads.graph[*vi]->pt, *vi);
-		item.territory = (temp_roads.graph[nearestVertexDesc]->pt - temp_roads.graph[*vi]->pt).length();
-
-		// 各outing edgeを登録
-		RoadOutEdgeIter ei, eend;
-		for (boost::tie(ei, eend) = boost::out_edges(*vi, temp_roads.graph); ei != eend; ++ei) {
-			RoadVertexDesc tgt = boost::target(*ei, temp_roads.graph);
-			int degree = GraphUtil::getNumEdges(temp_roads, tgt);
-
-			Polyline2D polyline = GraphUtil::finerEdge(temp_roads, *ei, 20.0f);
-			if ((polyline[0] - temp_roads.graph[*vi]->pt).lengthSquared() > (polyline[0] - temp_roads.graph[tgt]->pt).lengthSquared()) {
-				std::reverse(polyline.begin(), polyline.end());
-			}
-			for (int i = 1; i < polyline.size(); ++i) {
-				polyline[i] -= polyline[0];
-			}
-			polyline.erase(polyline.begin());
-			item.addEdge(polyline, degree == 1);
-		}
-
-		kf->addItem(RoadEdge::TYPE_AVENUE, item);
-		id++;
+	// 特徴量を抽出
+	int num_vertices = extractAvenueFeature(temp_roads, area, kf);
+	if (perturbation) {
+		extractAvenueFeature(temp_roads, area, kf, true);
 	}
-	end = clock();
-	std::cout << "Elapsed time for extracting features from the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 
 	BBox bbox = area.envelope();
 	std::cout << "Area: " << area.area() << std::endl;
@@ -126,49 +87,11 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	end = clock();
 	std::cout << "Elapsed time for cleaning the streets: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 
-	start = clock();
-	num_vertices = 0;
-	id = 0;
-	for (boost::tie(vi, vend) = boost::vertices(temp_roads.graph); vi != vend; ++vi) {
-		if (!temp_roads.graph[*vi]->valid) continue;
-
-		// エリア外の頂点はスキップ
-		if (!area.contains(temp_roads.graph[*vi]->pt)) continue;
-
-		num_vertices++;
-
-		// エッジの数が2以下なら、スキップ
-		//if (GraphUtil::getNumEdges(temp_roads, *vi) <= 2) continue;
-
-		// 頂点の座標の、エリア中心からのオフセットを登録
-		KDEFeatureItem item(id);
-		item.pt = temp_roads.graph[*vi]->pt - center;
-
-		// 近接頂点までの距離を登録
-		RoadVertexDesc nearestVertexDesc = GraphUtil::getVertex(temp_roads, temp_roads.graph[*vi]->pt, *vi);
-		item.territory = (temp_roads.graph[nearestVertexDesc]->pt - temp_roads.graph[*vi]->pt).length();
-
-		// 各outing edgeを登録
-		RoadOutEdgeIter ei, eend;
-		for (boost::tie(ei, eend) = boost::out_edges(*vi, temp_roads.graph); ei != eend; ++ei) {
-			RoadVertexDesc tgt = boost::target(*ei, temp_roads.graph);
-			int degree = GraphUtil::getNumEdges(temp_roads, tgt);
-
-			Polyline2D polyline;
-			if ((temp_roads.graph[*ei]->polyLine[0] - temp_roads.graph[*vi]->pt).lengthSquared() > (temp_roads.graph[*ei]->polyLine[0] - temp_roads.graph[tgt]->pt).lengthSquared()) {
-				std::reverse(temp_roads.graph[*ei]->polyLine.begin(), temp_roads.graph[*ei]->polyLine.end());
-			}
-			for (int i = 1; i < temp_roads.graph[*ei]->polyLine.size(); ++i) {
-				polyline.push_back(temp_roads.graph[*ei]->polyLine[i] - temp_roads.graph[*vi]->pt);
-			}
-			item.addEdge(polyline, degree == 1);
-		}
-
-		kf->addItem(RoadEdge::TYPE_STREET, item);
-		id++;
+	// 特徴量を抽出
+	num_vertices = extractStreetFeature(temp_roads, area, kf);
+	if (perturbation) {
+		extractStreetFeature(temp_roads, area, kf, true);
 	}
-	end = clock();
-	std::cout << "Elapsed time for extracting features from the streets: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 
 	kf->setDensity(RoadEdge::TYPE_STREET, num_vertices / area.area());
 
@@ -177,4 +100,141 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	kf->setArea(area);
 
 	roadFeature.addFeature(kf);
+}
+
+int KDEFeatureExtractor::extractAvenueFeature(RoadGraph &orig_roads, const Polygon2D &area, KDEFeaturePtr kf, bool perturbation) {
+	RoadGraph roads;
+	GraphUtil::copyRoads(orig_roads, roads);
+
+	QVector2D center = area.centroid();
+
+	if (perturbation) {
+		RoadVertexIter vi, vend;
+		for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+			if (!roads.graph[*vi]->valid) continue;
+
+			RoadVertexDesc closestVertexDesc = GraphUtil::getVertex(roads, roads.graph[*vi]->pt, *vi);
+			float min_dist = (roads.graph[*vi]->pt - roads.graph[closestVertexDesc]->pt).length() * 0.5f;
+
+			// 交差点を少し動かす
+			GraphUtil::moveVertex(roads, *vi, roads.graph[*vi]->pt + QVector2D(Util::uniform_rand(-min_dist, min_dist), Util::uniform_rand(-min_dist, min_dist)));
+		}
+
+		GraphUtil::saveRoads(roads, "perturbed_avenues.gsm");
+	}
+
+	time_t start = clock();
+	int num_vertices = 0;
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		if (!roads.graph[*vi]->valid) continue;
+
+		// エリア外の頂点はスキップ
+		if (!area.contains(roads.graph[*vi]->pt)) continue;
+
+		num_vertices++;
+
+		// エッジの数が2以下なら、スキップ
+		//if (GraphUtil::getNumEdges(temp_roads, *vi) <= 2) continue;
+
+		// 頂点の座標の、エリア中心からのオフセットを登録
+		KDEFeatureItem item(kf->numItems(RoadEdge::TYPE_AVENUE));
+		item.pt = roads.graph[*vi]->pt - center;
+
+		// 近接頂点までの距離を登録
+		RoadVertexDesc nearestVertexDesc = GraphUtil::getVertex(roads, roads.graph[*vi]->pt, *vi);
+		item.territory = (roads.graph[nearestVertexDesc]->pt - roads.graph[*vi]->pt).length();
+
+		// 各outing edgeを登録
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads.graph); ei != eend; ++ei) {
+			RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+			int degree = GraphUtil::getNumEdges(roads, tgt);
+
+			Polyline2D polyline = GraphUtil::finerEdge(roads, *ei, 20.0f);
+			if ((polyline[0] - roads.graph[*vi]->pt).lengthSquared() > (polyline[0] - roads.graph[tgt]->pt).lengthSquared()) {
+				std::reverse(polyline.begin(), polyline.end());
+			}
+			for (int i = 1; i < polyline.size(); ++i) {
+				polyline[i] -= polyline[0];
+			}
+			polyline.erase(polyline.begin());
+			item.addEdge(polyline, degree == 1);
+		}
+
+		kf->addItem(RoadEdge::TYPE_AVENUE, item);
+	}
+	time_t end = clock();
+
+	std::cout << "Elapsed time for extracting features from the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
+
+	return num_vertices;
+}
+
+
+int KDEFeatureExtractor::extractStreetFeature(RoadGraph &orig_roads, const Polygon2D &area, KDEFeaturePtr kf, bool perturbation) {
+	RoadGraph roads;
+	GraphUtil::copyRoads(orig_roads, roads);
+
+	QVector2D center = area.centroid();
+
+	if (perturbation) {
+		RoadVertexIter vi, vend;
+		for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+			if (!roads.graph[*vi]->valid) continue;
+
+			RoadVertexDesc closestVertexDesc = GraphUtil::getVertex(roads, roads.graph[*vi]->pt, *vi);
+			float min_dist = (roads.graph[*vi]->pt - roads.graph[closestVertexDesc]->pt).length() * 0.5f;
+
+			// 交差点を少し動かす
+			GraphUtil::moveVertex(roads, *vi, roads.graph[*vi]->pt + QVector2D(Util::uniform_rand(-min_dist, min_dist), Util::uniform_rand(-min_dist, min_dist)));
+		}
+
+		GraphUtil::saveRoads(roads, "perturbed_streets.gsm");
+	}
+
+	time_t start = clock();
+	int num_vertices = 0;
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		if (!roads.graph[*vi]->valid) continue;
+
+		// エリア外の頂点はスキップ
+		if (!area.contains(roads.graph[*vi]->pt)) continue;
+
+		num_vertices++;
+
+		// エッジの数が2以下なら、スキップ
+		//if (GraphUtil::getNumEdges(temp_roads, *vi) <= 2) continue;
+
+		// 頂点の座標の、エリア中心からのオフセットを登録
+		KDEFeatureItem item(kf->numItems(RoadEdge::TYPE_STREET));
+		item.pt = roads.graph[*vi]->pt - center;
+
+		// 近接頂点までの距離を登録
+		RoadVertexDesc nearestVertexDesc = GraphUtil::getVertex(roads, roads.graph[*vi]->pt, *vi);
+		item.territory = (roads.graph[nearestVertexDesc]->pt - roads.graph[*vi]->pt).length();
+
+		// 各outing edgeを登録
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads.graph); ei != eend; ++ei) {
+			RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+			int degree = GraphUtil::getNumEdges(roads, tgt);
+
+			Polyline2D polyline;
+			if ((roads.graph[*ei]->polyLine[0] - roads.graph[*vi]->pt).lengthSquared() > (roads.graph[*ei]->polyLine[0] - roads.graph[tgt]->pt).lengthSquared()) {
+				std::reverse(roads.graph[*ei]->polyLine.begin(), roads.graph[*ei]->polyLine.end());
+			}
+			for (int i = 1; i < roads.graph[*ei]->polyLine.size(); ++i) {
+				polyline.push_back(roads.graph[*ei]->polyLine[i] - roads.graph[*vi]->pt);
+			}
+			item.addEdge(polyline, degree == 1);
+		}
+
+		kf->addItem(RoadEdge::TYPE_STREET, item);
+	}
+	time_t end = clock();
+	std::cout << "Elapsed time for extracting features from the streets: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
+
+	return num_vertices;
 }
