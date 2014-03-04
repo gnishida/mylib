@@ -201,11 +201,11 @@ void RoadGraph::clear() {
 void RoadGraph::setZ(float z) {
 	// define the width per lane
 	float widthBase2;
-	if (z < 300.0f) {
+	if (z < 450.0f) {
 		widthBase2 = 2.0f;
-	} else if (z < 600.0f) {
+	} else if (z < 900.0f) {
 		widthBase2 = 4.0f;
-	} else if (z < 1080.0f) {
+	} else if (z < 1620.0f) {
 		widthBase2 = 10.0f;
 	} else if (z < 5760.0f) {
 		widthBase2 = 12.0f;

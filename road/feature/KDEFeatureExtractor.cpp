@@ -1,4 +1,5 @@
 ﻿#include <time.h>
+#include "../../common/global.h"
 #include "../../common/Util.h"
 #include "../GraphUtil.h"
 #include "KDEFeatureExtractor.h"
@@ -6,7 +7,7 @@
 /**
  * KDEベースでの特徴量を抽出する。
  */
-void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, bool perturbation, bool rotation, RoadFeature& roadFeature) {
+void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, RoadFeature& roadFeature) {
 	roadFeature.clear();
 
 	KDEFeaturePtr kf = KDEFeaturePtr(new KDEFeature(0));
@@ -20,6 +21,9 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, bool
 	GraphUtil::copyRoads(roads, temp_roads);
 	time_t end = clock();
 	std::cout << "Elapsed time for copying the roads: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
+	if (G::getBool("exactCut")) {
+		GraphUtil::extractRoads2(temp_roads, area);
+	}
 	start = clock();
 	GraphUtil::extractRoads(temp_roads, RoadEdge::TYPE_AVENUE | RoadEdge::TYPE_BOULEVARD);
 	end = clock();
@@ -53,7 +57,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, bool
 
 	// 特徴量を抽出
 	int num_vertices = extractAvenueFeature(temp_roads, area, kf);
-	if (perturbation) {
+	if (G::getBool("perturbation")) {
 		extractAvenueFeature(temp_roads, area, kf, true);
 	}
 
@@ -70,6 +74,9 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, bool
 	GraphUtil::copyRoads(roads, temp_roads);
 	end = clock();
 	std::cout << "Elapsed time for copying the roads: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
+	if (G::getBool("exactCut")) {
+		GraphUtil::extractRoads2(temp_roads, area);
+	}
 	start = clock();
 	GraphUtil::extractRoads(temp_roads, RoadEdge::TYPE_STREET);
 	end = clock();
@@ -89,7 +96,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, bool
 
 	// 特徴量を抽出
 	num_vertices = extractStreetFeature(temp_roads, area, kf);
-	if (perturbation) {
+	if (G::getBool("perturbation")) {
 		extractStreetFeature(temp_roads, area, kf, true);
 	}
 

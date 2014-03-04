@@ -13,6 +13,9 @@ RadialFeature::RadialFeature(int group_id) : AbstractFeature() {
 void RadialFeature::rotate(float deg) {
 }
 
+void RadialFeature::scale(const Polygon2D &area) {
+}
+
 /**
  * ファイルから、Radialパターンの特徴量を読込む。
  */

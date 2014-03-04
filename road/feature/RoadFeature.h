@@ -27,5 +27,6 @@ public:
 	void normalize();
 
 	void rotate(float deg);
+	void scale(const Polygon2D &area);
 };
 

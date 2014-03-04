@@ -80,6 +80,33 @@ void KDEFeature::rotate(float deg) {
 	}
 }
 
+void KDEFeature::scale(const Polygon2D &area) {
+	QVector2D centroid = _area.centroid();
+
+	BBox bboxTarget = area.envelope();
+	BBox bboxSource = _area.envelope();
+
+	float scaleX = bboxTarget.dx() / bboxSource.dx() + 0.1f;
+	float scaleY = bboxTarget.dy() / bboxSource.dy() + 0.1f;
+
+	for (int i = 0; i < _avenueItems.size(); ++i) {
+		_avenueItems[i].scale(scaleX, scaleY, centroid);
+
+		QString str = QString("avenue_kernel_%1.png").arg(i);
+		_avenueItems[i].imwrite(str);
+	}
+
+	for (int i = 0; i < _streetItems.size(); ++i) {
+		_streetItems[i].scale(scaleX, scaleY, centroid);
+	}
+
+	for (int i = 0; i < _area.size(); ++i) {
+		QVector2D vec = _area[i] - centroid;
+		_area[i].setX(centroid.x() + vec.x() * scaleX);
+		_area[i].setY(centroid.y() + vec.y() * scaleY);
+	}
+}
+
 /**
  * 与えられたfeatureノード配下のXML情報に基づいて、グリッド特徴量を設定する。
  */

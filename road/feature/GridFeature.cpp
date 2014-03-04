@@ -186,6 +186,9 @@ float GridFeature::generateLength(int dir, float uniform_random_number) const {
 void GridFeature::rotate(float deg) {
 }
 
+void GridFeature::scale(const Polygon2D &area) {
+}
+
 /**
  * ファイルから、グリッドの特徴量を読込む。
  */

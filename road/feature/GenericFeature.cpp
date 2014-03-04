@@ -193,6 +193,9 @@ int GenericFeature::getDirections(int roadType) const {
 void GenericFeature::rotate(float deg) {
 }
 
+void GenericFeature::scale(const Polygon2D &area) {
+}
+
 /**
  * ファイルから、グリッドの特徴量を読込む。
  */

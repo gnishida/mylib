@@ -14,7 +14,7 @@
  * つまり、複数のPlaceTypeには対応していない。
  * 将来的に、複数のPlaceTypeに対応させたい。
  */
-void RoadGenerator::generateRoadNetwork(RoadGraph& roads, const Polygon2D &area, const RoadFeature& rf, bool invadingCheck, float weightEdge, float weightLocation, float weightRepetition, bool addAvenuesOnBoundary, int numIterations, bool isGenerateLocalStreets) {
+void RoadGenerator::generateRoadNetwork(RoadGraph& roads, const Polygon2D &area, const RoadFeature& rf) {
 	//roadArea.roads.clear();
 
 	if (rf.features.size() == 0) return;
@@ -31,7 +31,7 @@ void RoadGenerator::generateRoadNetwork(RoadGraph& roads, const Polygon2D &area,
 		rg2.generateRoadNetwork(roads, area, dynamic_cast<RadialFeature&>(*rf.features[0]));
 		break;
 	case AbstractFeature::TYPE_KDE:
-		KDERoadGenerator::generateRoadNetwork(roads, area, dynamic_cast<KDEFeature&>(*rf.features[0]), invadingCheck, weightEdge, weightLocation, weightRepetition, addAvenuesOnBoundary, numIterations, isGenerateLocalStreets);
+		KDERoadGenerator::generateRoadNetwork(roads, area, dynamic_cast<KDEFeature&>(*rf.features[0]));
 		break;
 	case AbstractFeature::TYPE_GENERIC:
 		rg4.generateRoadNetwork(roads, area, dynamic_cast<GenericFeature&>(*rf.features[0]));

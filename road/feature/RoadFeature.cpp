@@ -99,3 +99,8 @@ void RoadFeature::rotate(float deg) {
 	}
 }
 
+void RoadFeature::scale(const Polygon2D &area) {
+	for (int i = 0; i < features.size(); ++i) {
+		features[i]->scale(area);
+	}
+}

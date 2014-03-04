@@ -29,6 +29,7 @@ public:
 	const float density(int roadType) const;
 
 	void rotate(float deg);
+	void scale(const Polygon2D &area);
 
 	void load(QDomNode& node);
 	void loadAvenue(QDomNode& node);

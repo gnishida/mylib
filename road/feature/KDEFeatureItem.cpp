@@ -1,6 +1,8 @@
 ﻿#include <QFile>
 #include <QDomDocument>
 #include <QTextStream>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 #include "../../common/Util.h"
 #include "KDEFeatureItem.h"
 
@@ -34,6 +36,24 @@ float KDEFeatureItem::getMinDistance(const Polyline2D &polyline) const {
 }
 
 /**
+ * 与えられたエッジとの方向の差の最小値を返却する。
+ */
+float KDEFeatureItem::getMinAngle(const Polyline2D &polyline) const {
+	float min_angle = std::numeric_limits<float>::max();
+
+	for (int i = 0; i < edges.size(); ++i) {
+		if (edges[i].edge.size() == 0) continue;
+
+		float angle = Util::diffAngle(polyline.last() - polyline[0], edges[i].edge.last());
+		if (angle < min_angle) {
+			min_angle = angle;
+		}
+	}
+
+	return min_angle;
+}
+
+/**
  * 指定された角度[degree]だけ、交差点カーネルを時計回りに回転する。
  */
 void KDEFeatureItem::rotate(float deg, const QVector2D &orig) {
@@ -41,6 +61,16 @@ void KDEFeatureItem::rotate(float deg, const QVector2D &orig) {
 
 	for (int i = 0; i < edges.size(); ++i) {
 		edges[i].edge.rotate(deg, orig);
+	}
+}
+
+void KDEFeatureItem::scale(float scaleX, float scaleY, const QVector2D &orig) {
+	QVector2D vec = pt - orig;
+	pt.setX(orig.x() + vec.x() * scaleX);
+	pt.setY(orig.y() + vec.y() * scaleY);
+
+	for (int i = 0; i < edges.size(); ++i) {
+		edges[i].scale(scaleX, scaleY, orig);
 	}
 }
 
@@ -94,3 +124,19 @@ void KDEFeatureItem::save(QDomDocument& doc, QDomNode& node) {
 	}
 }
 
+void KDEFeatureItem::imwrite(const QString filename) const {
+	cv::Mat mat = cv::Mat_<uchar>::zeros(320, 320);
+
+	for (int i = 0; i < edges.size(); ++i) {
+		if (edges[i].edge.size() == 0) continue;
+
+		cv::line(mat, cv::Point(160, 160), cv::Point(edges[i].edge[0].x() * 0.1f + 160, edges[i].edge[0].y() * 0.1f + 160), cv::Scalar(255), 3, CV_AA);
+		for (int j = 1; j < edges[i].edge.size(); ++j) {
+			cv::line(mat, cv::Point(edges[i].edge[j-1].x() * 0.1f + 160, edges[i].edge[j-1].y() * 0.1f + 160), cv::Point(edges[i].edge[j].x() * 0.1f + 160, edges[i].edge[j].y() * 0.1f + 160), cv::Scalar(255), 3, CV_AA);
+		}
+	}
+
+	cv::flip(mat, mat, 0);
+
+	cv::imwrite(filename.toUtf8().data(), mat);
+}

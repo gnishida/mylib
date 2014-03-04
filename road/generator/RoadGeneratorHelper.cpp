@@ -302,6 +302,7 @@ bool RoadGeneratorHelper::isRedundantEdge(RoadGraph& roads, RoadVertexDesc v_des
 
 /**
  * エリアに対して、指定された位置のモジュラ位置を返却する。
+ * エリアは、原点を中心とする座標系である。
  */
 QVector2D RoadGeneratorHelper::modulo(const Polygon2D &area, const QVector2D &pt) {
 	QVector2D ret;
@@ -326,6 +327,31 @@ QVector2D RoadGeneratorHelper::modulo(const Polygon2D &area, const QVector2D &pt
 
 	return ret;
 }
+/*
+QVector2D RoadGeneratorHelper::modulo(const Polygon2D &area, const QVector2D &pt) {
+	QVector2D ret;
+
+	BBox bbox = area.envelope();
+
+	if (pt.x() < 0) {
+		ret.setX(bbox.dx() - (int)(-pt.x()) % (int)bbox.dx());
+	} else if (pt.x() > bbox.dx()) {
+		ret.setX((int)pt.x() % (int)bbox.dx());
+	} else {
+		ret.setX(pt.x());
+	}
+
+	if (pt.y() < 0) {
+		ret.setY(bbox.dy() - (int)(- pt.y()) % (int)bbox.dy());
+	} else if (pt.y() > bbox.dy()) {
+		ret.setY((int)pt.y() % (int)bbox.dy());
+	} else {
+		ret.setY(pt.y());
+	}
+
+	return ret;
+}
+*/
 
 void RoadGeneratorHelper::buildGraphFromKernel(RoadGraph& roads, const KDEFeatureItem &item, const QVector2D &offset) {
 	roads.clear();
