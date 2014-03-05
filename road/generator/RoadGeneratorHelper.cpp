@@ -83,6 +83,53 @@ bool RoadGeneratorHelper::canSnapToVertex(RoadGraph& roads, const QVector2D& pos
 }
 
 /**
+ * 近くの頂点にsnapすべきか、チェックする。
+ * srcDescから伸ばしてきたエッジの先端posに近い頂点を探し、エッジの延長方向とのなす角度が90度以下で、距離が閾値以下のものがあるか探す。
+ * 
+ * @param pos				エッジ先端
+ * @param threshold			距離の閾値
+ * @param srcDesc			この頂点からエッジを延ばしている
+ * @param area			このエリア内の頂点のみを対象
+ * @param snapDesc			最も近い頂点
+ * @return					もしsnapすべき頂点があれば、trueを返却する
+ */
+bool RoadGeneratorHelper::canSnapToVertex2(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, const BBox &area, RoadVertexDesc& snapDesc) {
+	float min_dist = std::numeric_limits<float>::max();
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
+		if (!roads.graph[*ei]->valid) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads.graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+
+		if (src == srcDesc || tgt == srcDesc) continue;
+
+		// 頂点が、area外なら、スキップ
+		if (!area.contains(roads.graph[src]->pt) || !area.contains(roads.graph[tgt]->pt)) continue;
+
+		if (QVector2D::dotProduct(roads.graph[src]->pt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt) > 0) {
+			float dist1 = (roads.graph[src]->pt - pos).lengthSquared();
+			if (dist1 < min_dist) {
+				min_dist = dist1;
+				snapDesc = src;
+			}
+		}
+
+		if (QVector2D::dotProduct(roads.graph[tgt]->pt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt) > 0) {
+			float dist2 = (roads.graph[tgt]->pt - pos).lengthSquared();
+			if (dist2 < min_dist) {
+				min_dist = dist2;
+				snapDesc = tgt;
+			}
+		}
+	}
+
+	if (min_dist <= threshold * threshold) return true;
+	else return false;
+}
+
+/**
  * 近くのエッジにsnapすべきか、チェックする。
  * srcDescから伸ばしてきたエッジの先端posに近いエッジを探し、エッジの延長方向とのなす角度が90度以下で、距離が閾値以下のものがあるか探す。
  * 
@@ -101,6 +148,56 @@ bool RoadGeneratorHelper::canSnapToEdge(RoadGraph& roads, const QVector2D& pos, 
 
 		// Highwayとは、intersectさせない
 		if (roads.graph[*ei]->type == RoadEdge::TYPE_HIGHWAY) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads.graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+
+		if (src == srcDesc || tgt == srcDesc) continue;
+
+		QVector2D closePt;
+		float dist = GraphUtil::distance(roads, pos, *ei, closePt);
+
+		if (QVector2D::dotProduct(closePt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt) > 0) {
+			if (dist < min_dist) {
+				min_dist = dist;
+				snapEdge = *ei;
+				closestPt = closePt;
+			}
+		}
+	}		
+
+	if (min_dist < threshold) return true;
+	else return false;
+}
+
+/**
+ * 近くのエッジにsnapすべきか、チェックする。
+ * srcDescから伸ばしてきたエッジの先端posに近いエッジを探し、エッジの延長方向とのなす角度が90度以下で、距離が閾値以下のものがあるか探す。
+ * 
+ * @param pos				エッジ先端
+ * @param threshold			距離の閾値
+ * @param srcDesc			この頂点からエッジを延ばしている
+ * @param area				この領域内のエッジをスナップ先の対象とする
+ * @param snapDesc			最も近い頂点
+ * @return					もしsnapすべき頂点があれば、trueを返却する
+ */
+bool RoadGeneratorHelper::canSnapToEdge2(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, const BBox &area, RoadEdgeDesc& snapEdge, QVector2D &closestPt) {
+	float min_dist = std::numeric_limits<float>::max();
+
+	RoadEdgeIter ei, eend;
+	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
+		if (!roads.graph[*ei]->valid) continue;
+
+		// Highwayとは、intersectさせない
+		if (roads.graph[*ei]->type == RoadEdge::TYPE_HIGHWAY) continue;
+
+		RoadVertexDesc src = boost::source(*ei, roads.graph);
+		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
+
+		if (src == srcDesc || tgt == srcDesc) continue;
+
+		// 当該エッジが、area外なら、スキップ
+		if (!area.contains(roads.graph[src]->pt) || !area.contains(roads.graph[tgt]->pt)) continue;
 
 		QVector2D closePt;
 		float dist = GraphUtil::distance(roads, pos, *ei, closePt);
@@ -352,6 +449,126 @@ QVector2D RoadGeneratorHelper::modulo(const Polygon2D &area, const QVector2D &pt
 	return ret;
 }
 */
+
+/**
+ * Example領域を使って、指定された位置（ターゲット領域の中心からのオフセット）のモジュラ位置を返却する。
+ * モジュラ位置は、Example領域のBBoxの中に入る座標となる。
+ * ※ 現状の実装では、Axis Aligned BBoxを使用し、Oriented BBoxなどをサポートしていない。
+ *
+ * @param area		Example領域（Exampleの中心を原点とする座標系）
+ * @param pt		ターゲット領域の中心を原点とする座標系での、指定された位置
+ * @param bbox		指定された位置が入る、BBox
+ * @return			指定された位置をmoduloした結果（Example領域のBBoxの中に入っているはず）
+ */
+QVector2D RoadGeneratorHelper::modulo2(const Polygon2D &area, const QVector2D &pt, BBox &bbox) {
+	QVector2D ret;
+
+	BBox bboxExample = area.envelope();
+
+	if (pt.x() < bboxExample.minPt.x()) {
+		ret.setX(bboxExample.maxPt.x() - (int)(bboxExample.minPt.x() - pt.x()) % (int)bboxExample.dx());
+
+		int u = (bboxExample.minPt.x() - pt.x()) / bboxExample.dx() + 1;
+		bbox.minPt.setX(bboxExample.minPt.x() - bboxExample.dx() * u);
+		bbox.maxPt.setX(bboxExample.maxPt.x() - bboxExample.dx() * u);
+	} else if (pt.x() > bboxExample.maxPt.x()) {
+		ret.setX(bboxExample.minPt.x() + (int)(pt.x() - bboxExample.maxPt.x()) % (int)bboxExample.dx());
+
+		int u = (pt.x() - bboxExample.maxPt.x()) / bboxExample.dx() + 1;
+		bbox.minPt.setX(bboxExample.minPt.x() + bboxExample.dx() * u);
+		bbox.maxPt.setX(bboxExample.maxPt.x() + bboxExample.dx() * u);
+	} else {
+		ret.setX(pt.x());
+		bbox.minPt.setX(bboxExample.minPt.x());
+		bbox.maxPt.setX(bboxExample.maxPt.x());
+	}
+
+	if (pt.y() < bboxExample.minPt.y()) {
+		ret.setY(bboxExample.maxPt.y() - (int)(bboxExample.minPt.y() - pt.y()) % (int)bboxExample.dy());
+
+		int v = (bboxExample.minPt.y() - pt.y()) / bboxExample.dy() + 1;
+		bbox.minPt.setY(bboxExample.minPt.y() - bboxExample.dy() * v);
+		bbox.maxPt.setY(bboxExample.maxPt.y() - bboxExample.dy() * v);
+	} else if (pt.y() > bboxExample.maxPt.y()) {
+		ret.setY(bboxExample.minPt.y() + (int)(pt.y() - bboxExample.maxPt.y()) % (int)bboxExample.dy());
+
+		int v = (pt.y() - bboxExample.maxPt.y()) / bboxExample.dy() + 1;
+		bbox.minPt.setY(bboxExample.minPt.y() + bboxExample.dy() * v);
+		bbox.maxPt.setY(bboxExample.maxPt.y() + bboxExample.dy() * v);
+	} else {
+		ret.setY(pt.y());
+		bbox.minPt.setY(bboxExample.minPt.y());
+		bbox.maxPt.setY(bboxExample.maxPt.y());
+	}
+
+	return ret;
+}
+
+/**
+ * 指定された点を含むBBoxに、initial seedがあるかチェックする。
+ */
+bool RoadGeneratorHelper::containsInitialSeed(const Polygon2D &targetArea, const Polygon2D &exampleArea, const QVector2D &pt) {
+	BBox targetBBox = targetArea.envelope();
+	BBox exampleBBox = exampleArea.envelope();
+
+	QVector2D center = targetBBox.midPt();
+
+	if (pt.x() > center.x()) {
+		int u = targetBBox.dx() / 2 - exampleBBox.dx() / 2;
+		if (u > 0) {
+			u = (int)(u / exampleBBox.dx()) + 1;
+		} else {
+			u = 0;
+		}
+		if (pt.x() - center.x() - exampleBBox.dx() / 2 > u * exampleBBox.dx()) return false;
+	} else {
+		int u = targetBBox.dx() / 2 - exampleBBox.dx() / 2;
+		if (u > 0) {
+			u = (int)(u / exampleBBox.dx()) + 1;
+		} else {
+			u = 0;
+		}
+		if (center.x() - pt.x() - exampleBBox.dx() / 2 > u * exampleBBox.dx()) return false;
+	}
+
+	if (pt.y() > center.y()) {
+		int v = targetBBox.dy() / 2 - exampleBBox.dy() / 2;
+		if (v > 0) {
+			v = (int)(v / exampleBBox.dy()) + 1;
+		} else {
+			v = 0;
+		}
+		if (pt.y() - center.y() - exampleBBox.dy() / 2 > v * exampleBBox.dy()) return false;
+	} else {
+		int v = targetBBox.dy() / 2 - exampleBBox.dy() / 2;
+		if (v > 0) {
+			v = (int)(v / exampleBBox.dy()) + 1;
+		} else {
+			v = 0;
+		}
+		if (center.y() - pt.y() - exampleBBox.dy() / 2 > v * exampleBBox.dy()) return false;
+	}
+
+	return true;
+}
+
+/**
+ * 位置ptが、bboxの中の上下左右、どの方向かを返却する。
+ *
+ * @return				0: 右 / 1: 上 / 2: 左 / 3: 下
+ */
+int RoadGeneratorHelper::getRelativeDirectionInArea(const BBox &bbox, const QVector2D &pt) {
+	float dx = (pt.x() - bbox.midPt().x()) / bbox.dx();
+	float dy = (pt.y() - bbox.midPt().y()) / bbox.dy();
+
+	if (fabs(dx) > fabs(dy)) {
+		if (dx >= 0) return 0;
+		else return 2;
+	} else {
+		if (dy >= 0) return 1;
+		else return 3;
+	}
+}
 
 void RoadGeneratorHelper::buildGraphFromKernel(RoadGraph& roads, const KDEFeatureItem &item, const QVector2D &offset) {
 	roads.clear();

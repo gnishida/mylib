@@ -23,7 +23,7 @@ public:
 	KDEFeatureItem(int id) : id(id) {}
 	~KDEFeatureItem() {}
 
-	void addEdge(const Polyline2D &polyline, bool deadend);
+	void addEdge(const Polyline2D &polyline, bool deadend, bool onBoundary);
 	float getMinDistance(const Polyline2D &polyline) const;
 	float getMinAngle(const Polyline2D &polyline) const;
 

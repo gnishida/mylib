@@ -220,6 +220,31 @@ bool GraphUtil::getVertex(RoadGraph& roads, const QVector2D& pos, float threshol
 }
 
 /**
+ * 指定した領域の中に、指定した位置に最も近い頂点を探す。
+ * 指定した領域の中に、１つも頂点がない場合は、falseを返却する。
+ */
+bool GraphUtil::getVertexInArea(RoadGraph &roads, const QVector2D &pos, const BBox &area, RoadVertexDesc &desc) {
+	bool found = false;
+	float min_dist = std::numeric_limits<float>::max();
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		if (!roads.graph[*vi]->valid) continue;
+
+		if (!area.contains(pos)) continue;
+
+		float dist = (roads.graph[*vi]->pt - pos).lengthSquared();
+		if (dist < min_dist) {
+			min_dist = dist;
+			desc = *vi;
+			found = true;
+		}
+	}
+
+	return found;
+}
+
+/**
  * Add a vertex.
  * Note: The specified vertex v is used for this vertex instead of copying it.
  */
@@ -1372,6 +1397,7 @@ void GraphUtil::extractRoads2(RoadGraph& roads, const Polygon2D& area, int roadT
 		}
 
 		RoadVertexDesc v = splitEdge(roads, edges[e_id], intPt);
+		roads.graph[v]->onBoundary = true;
 		if (area.contains(roads.graph[src]->pt)) {
 			RoadEdgeDesc e = getEdge(roads, v, tgt);
 			roads.graph[e]->valid = false;

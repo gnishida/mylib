@@ -6,8 +6,8 @@
 #include "../../common/Util.h"
 #include "KDEFeatureItem.h"
 
-void KDEFeatureItem::addEdge(const Polyline2D &polyline, bool deadend) {
-	edges.push_back(KDEFeatureItemEdge(polyline, deadend));
+void KDEFeatureItem::addEdge(const Polyline2D &polyline, bool deadend, bool onBoundary) {
+	edges.push_back(KDEFeatureItemEdge(polyline, deadend, onBoundary));
 }
 
 /**
@@ -93,7 +93,7 @@ void KDEFeatureItem::load(QDomNode& node) {
 				child2 = child2.nextSibling();
 			}
 
-			edges.push_back(KDEFeatureItemEdge(polyline, child.toElement().attribute("deadend") == "true"));
+			edges.push_back(KDEFeatureItemEdge(polyline, child.toElement().attribute("deadend") == "true", child.toElement().attribute("onBoundary") == "true"));
 		}
 
 		child = child.nextSibling();
@@ -109,6 +109,12 @@ void KDEFeatureItem::save(QDomDocument& doc, QDomNode& node) {
 			node_edge.setAttribute("deadend", "true");
 		} else {
 			node_edge.setAttribute("deadend", "false");
+		}
+		
+		if (edges[i].onBoundary) {
+			node_edge.setAttribute("onBoundary", "true");
+		} else {
+			node_edge.setAttribute("onBoundary", "false");
 		}
 
 		for (int j = 0; j < edges[i].edge.size(); ++j) {

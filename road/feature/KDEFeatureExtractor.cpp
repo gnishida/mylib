@@ -12,7 +12,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 
 	KDEFeaturePtr kf = KDEFeaturePtr(new KDEFeature(0));
 
-	QVector2D center = area.centroid();
+	QVector2D center = area.envelope().midPt();
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Avenueのみを抽出する
@@ -103,7 +103,12 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	kf->setDensity(RoadEdge::TYPE_STREET, num_vertices / area.area());
 
 	kf->setWeight(1.0f);
-	kf->setCenter(area.centroid());
+	kf->setCenter(center);
+
+	// 領域を少しだけ大きくする。これにより、抽出された道路網の交差点が、確実に領域内と判定されるはず。
+	for (int i = 0; i < area.size(); ++i) {
+		area[i] = (area[i] - center) * 1.02f + center;
+	}
 	kf->setArea(area);
 
 	roadFeature.addFeature(kf);
@@ -166,7 +171,7 @@ int KDEFeatureExtractor::extractAvenueFeature(RoadGraph &orig_roads, const Polyg
 				polyline[i] -= polyline[0];
 			}
 			polyline.erase(polyline.begin());
-			item.addEdge(polyline, degree == 1);
+			item.addEdge(polyline, degree == 1, roads.graph[tgt]->onBoundary);
 		}
 
 		kf->addItem(RoadEdge::TYPE_AVENUE, item);
@@ -235,7 +240,7 @@ int KDEFeatureExtractor::extractStreetFeature(RoadGraph &orig_roads, const Polyg
 			for (int i = 1; i < roads.graph[*ei]->polyLine.size(); ++i) {
 				polyline.push_back(roads.graph[*ei]->polyLine[i] - roads.graph[*vi]->pt);
 			}
-			item.addEdge(polyline, degree == 1);
+			item.addEdge(polyline, degree == 1, false);
 		}
 
 		kf->addItem(RoadEdge::TYPE_STREET, item);

@@ -7,9 +7,10 @@ public:
 	Polyline2D edge;
 	bool deadend;
 	bool confident;
+	bool onBoundary;
 
 public:
-	KDEFeatureItemEdge(const Polyline2D &edge, bool deadend) : edge(edge), deadend(deadend) {}
+	KDEFeatureItemEdge(const Polyline2D &edge, bool deadend, bool onBoundary) : edge(edge), deadend(deadend), onBoundary(onBoundary) {}
 	~KDEFeatureItemEdge() {}
 
 	void scale(float scaleX, float scaleY, const QVector2D &orig);

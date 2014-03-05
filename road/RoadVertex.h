@@ -16,6 +16,7 @@ public:
 	std::vector<float> lengths;
 
 	KDEFeatureItem kernel;
+	bool snapped;
 
 public:
 	RoadVertex();
