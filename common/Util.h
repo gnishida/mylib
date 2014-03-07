@@ -30,6 +30,9 @@ public:
 	static QVector2D rotate(const QVector2D &pt, float rad);
 	static QVector2D rotate(const QVector2D &pt, float rad, const QVector2D &orig);
 
+	// 座標系関係
+	static void cartesian2polar(const QVector2D &pt, float &radius, float &theta);
+
 	// 乱数関係
 	static float uniform_rand();
 	static float uniform_rand(float a, float b);

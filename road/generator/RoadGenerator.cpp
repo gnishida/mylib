@@ -5,8 +5,6 @@
 #include "GridRoadGenerator.h"
 #include "RadialRoadGenerator.h"
 #include "KDERoadGenerator.h"
-#include "KDERoadGenerator2.h"
-#include "GenericRoadGenerator.h"
 
 /**
  * 道路網を生成する
@@ -21,7 +19,6 @@ void RoadGenerator::generateRoadNetwork(RoadGraph& roads, const Polygon2D &area,
 
 	GridRoadGenerator rg1;
 	RadialRoadGenerator rg2;
-	GenericRoadGenerator rg4;
 
 	switch (rf.features[0]->type()) {
 	case AbstractFeature::TYPE_GRID:
@@ -32,9 +29,6 @@ void RoadGenerator::generateRoadNetwork(RoadGraph& roads, const Polygon2D &area,
 		break;
 	case AbstractFeature::TYPE_KDE:
 		KDERoadGenerator::generateRoadNetwork(roads, area, dynamic_cast<KDEFeature&>(*rf.features[0]));
-		break;
-	case AbstractFeature::TYPE_GENERIC:
-		rg4.generateRoadNetwork(roads, area, dynamic_cast<GenericFeature&>(*rf.features[0]));
 		break;
 	}
 

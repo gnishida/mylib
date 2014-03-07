@@ -198,6 +198,7 @@ float Util::normalizeAngle(float angle) {
 
 /**
  * Compute the difference in angle that is normalized in the range of [0, PI].
+ * absolute == falseの時は、dir1の角度 - dir2の角度を[-PI, PI]で返却する。
  */
 float Util::diffAngle(const QVector2D& dir1, const QVector2D& dir2, bool absolute) {
 	float ang1 = atan2f(dir1.y(), dir1.x());
@@ -240,10 +241,24 @@ QVector2D Util::rotate(const QVector2D &pt, float rad, const QVector2D &orig) {
 	return rotate(pt - orig, rad) + orig;
 }
 
+/**
+ * カーテシアン座標系から、極座標系へ変換する。
+ */
+void Util::cartesian2polar(const QVector2D &pt, float &radius, float &theta) {
+	radius = pt.length();
+	theta = atan2f(pt.y(), pt.x());
+}
+
+/**
+ * Uniform乱数[0, 1)を生成する
+ */
 float Util::uniform_rand() {
 	return rand() / (float(RAND_MAX) + 1);
 }
 
+/**
+ * 指定された範囲[a, b)のUniform乱数を生成する
+ */
 float Util::uniform_rand(float a, float b) {
 	return uniform_rand() * (b - a) + a;
 }

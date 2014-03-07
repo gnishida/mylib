@@ -3,23 +3,21 @@
 #include "Polyline2D.h"
 #include "Util.h"
 
-/**
- * 当該ポリラインを移動する。
- */
-/*void Polyline2D::translate(float x, float y) {
-	Polyline2D temp = *this;
-	this->clear();
-
-	boost::geometry::strategy::transform::translate_transformer<QVector2D, QVector2D> translate(x, y);
-    boost::geometry::transform(temp, *this, translate);
-}*/
-
 const QVector2D & Polyline2D::last() const {
 	return at(size() - 1);
 }
 
 QVector2D & Polyline2D::last() {
 	return at(size() - 1);
+}
+
+/**
+ * 当該ポリラインを移動する。
+ */
+void Polyline2D::translate(const QVector2D &offset) {
+	for (int i = 0; i < size(); ++i) {
+		(*this)[i] += offset;
+	}
 }
 
 /**
@@ -31,5 +29,14 @@ QVector2D & Polyline2D::last() {
 void Polyline2D::rotate(float angle, const QVector2D &orig) {
 	for (int i = 0; i < size(); ++i) {
 		(*this)[i] = Util::rotate(at(i), -Util::deg2rad(angle), orig);
+	}
+}
+
+/**
+ * スケールする
+ */
+void Polyline2D::scale(float factor) {
+	for (int i = 0; i < size(); ++i) {
+		(*this)[i] = QVector2D(at(i).x() * factor, at(i).y() * factor);
 	}
 }

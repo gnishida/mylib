@@ -268,20 +268,14 @@ void GraphUtil::moveVertex(RoadGraph& roads, RoadVertexDesc v, const QVector2D& 
 	for (boost::tie(ei, eend) = boost::out_edges(v, roads.graph); ei != eend; ++ei) {
 		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 
-		//std::vector<QVector2D> polyLine = roads.graph[*ei]->polyLine;
-		Polyline2D polyLine = roads.graph[*ei]->polyLine;
-		if ((polyLine[0] - roads.graph[v]->getPt()).lengthSquared() < (polyLine[0] - roads.graph[tgt]->getPt()).lengthSquared()) {
-			std::reverse(polyLine.begin(), polyLine.end());
+		Polyline2D polyline = roads.graph[*ei]->polyLine;
+		if ((polyline[0] - roads.graph[v]->pt).lengthSquared() < (polyline[0] - roads.graph[tgt]->pt).lengthSquared()) {
+			std::reverse(polyline.begin(), polyline.end());
 		}
 
-		int num = polyLine.size();
-		QVector2D dir = pt - roads.graph[v]->pt;
-		for (int i = 0; i < num - 1; i++) {
-			polyLine[i] += dir * (float)i / (float)(num - 1);
-		}
-		polyLine[num - 1] = pt;
+		movePolyline(roads, polyline, roads.graph[tgt]->pt, pt);
 
-		roads.graph[*ei]->polyLine = polyLine;
+		roads.graph[*ei]->polyLine = polyline;
 	}
 
 	// Move the vertex
@@ -674,18 +668,16 @@ void GraphUtil::moveEdge(RoadGraph& roads, RoadEdgeDesc e, QVector2D& src_pos, Q
 	roads.setModified();
 }
 
+/**
+ * Polylineを指定した始点、終点になるよう変形する。
+ */
 void GraphUtil::movePolyline(RoadGraph& roads, Polyline2D &polyline, const QVector2D& src_pos, const QVector2D& tgt_pos) {
-	int n = polyline.size();
+	float scale = (tgt_pos - src_pos).length() / (polyline.last() - polyline[0]).length();
+	float rotation_degree = Util::rad2deg(Util::diffAngle(polyline.last() - polyline[0], tgt_pos- src_pos, false));
 
-	QVector2D src_diff = src_pos - polyline[0];
-	QVector2D tgt_diff = tgt_pos - polyline.last();
-
-	for (int i = 1; i < n - 1; i++) {
-		polyline[i] += src_diff + (tgt_diff - src_diff) * (float)i / (float)(n - 1);
-	}
-
-	polyline[0] = src_pos;
-	polyline[n - 1] = tgt_pos;
+	polyline.scale(scale);
+	polyline.rotate(rotation_degree, QVector2D(0, 0));
+	polyline.translate(src_pos - polyline[0]);
 }
 
 /**

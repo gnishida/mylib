@@ -9,11 +9,12 @@ public:
 	Polyline2D() {}
 	~Polyline2D() {}
 
-	//void translate(float x, float y);
 	const QVector2D & last() const;
 	QVector2D & last();
 
+	void translate(const QVector2D &offset);
 	void rotate(float angle, const QVector2D &orig);
+	void scale(float factor);
 };
 
 /**

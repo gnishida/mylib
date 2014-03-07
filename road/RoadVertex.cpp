@@ -6,7 +6,6 @@ RoadVertex::RoadVertex() {
 	this->valid = true;
 	this->seed = false;
 	this->onBoundary = false;
-	this->snapped = false;
 }
 
 RoadVertex::RoadVertex(const QVector2D &pt) {
@@ -15,7 +14,6 @@ RoadVertex::RoadVertex(const QVector2D &pt) {
 	this->valid = true;
 	this->seed = false;
 	this->onBoundary = false;
-	this->snapped = false;
 }
 
 const QVector2D& RoadVertex::getPt() const {

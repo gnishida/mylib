@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <QVector2D>
+#include <QHash>
+#include <QVariant>
 #include <boost/shared_ptr.hpp>
 #include "feature/KDEFeatureItem.h"
 
@@ -16,7 +18,8 @@ public:
 	std::vector<float> lengths;
 
 	KDEFeatureItem kernel;
-	bool snapped;
+
+	QHash<QString, QVariant> properties;
 
 public:
 	RoadVertex();
