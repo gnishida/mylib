@@ -6,7 +6,6 @@ class KDEFeatureItemEdge {
 public:
 	Polyline2D edge;
 	bool deadend;
-	bool confident;
 	bool onBoundary;
 
 public:

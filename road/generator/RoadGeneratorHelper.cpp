@@ -41,7 +41,9 @@ bool RoadGeneratorHelper::intersects(RoadGraph &roads, const QVector2D& p0, cons
 
 /**
  * 近くの頂点にsnapすべきか、チェックする。
- * srcDescから伸ばしてきたエッジの先端posに近い頂点を探し、エッジの延長方向とのなす角度が90度以下で、距離が閾値以下のものがあるか探す。
+ * srcDescから伸ばしてきたエッジの先端posに近い頂点を探す。
+ * ただし、スナップによる変位角は90度未満で、接続された２つのエッジのなす角は90度より大きいこと。
+ * また、スナップによる移動距離が閾値以下であるものの中で、最短のものを選ぶ。
  * 
  * @param pos				エッジ先端
  * @param threshold			距離の閾値
@@ -49,9 +51,49 @@ bool RoadGeneratorHelper::intersects(RoadGraph &roads, const QVector2D& p0, cons
  * @param snapDesc			最も近い頂点
  * @return					もしsnapすべき頂点があれば、trueを返却する
  */
-bool RoadGeneratorHelper::canSnapToVertex(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, RoadVertexDesc& snapDesc) {
+bool RoadGeneratorHelper::canSnapToVertex(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, RoadVertexDesc& snapDesc, bool onlySnapToDegreeOne) {
 	float min_dist = std::numeric_limits<float>::max();
 
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		if (!roads.graph[*vi]->valid) continue;
+
+		if (onlySnapToDegreeOne && GraphUtil::getDegree(roads, *vi) != 1) continue;
+
+		// もう一方の端点を取得
+		RoadVertexDesc v2;
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads.graph); ei != eend; ++ei) {
+			if (!roads.graph[*ei]->valid) continue;
+
+			v2 = boost::target(*ei, roads.graph);
+			break;
+		}
+
+		// 自分自身には、スナップしない
+		if (v2 == srcDesc) continue;
+
+		// スナップによる変位角が90度以上なら、スキップ
+		float phi = Util::diffAngle(pos - roads.graph[srcDesc]->pt, roads.graph[*vi]->pt - roads.graph[srcDesc]->pt);
+		//if (phi >= M_PI * 0.5f) continue;
+
+		// ２つのエッジのなす角が90度以下なら、スキップ
+		float theta = Util::diffAngle(roads.graph[*vi]->pt - roads.graph[v2]->pt, roads.graph[*vi]->pt - roads.graph[srcDesc]->pt);
+		//if (theta <= M_PI * 0.5f) continue;
+
+		if (phi > theta * 0.5f) continue;
+
+		float dist2 = (roads.graph[*vi]->pt - pos).lengthSquared();
+		if (dist2 < min_dist) {
+			min_dist = dist2;
+			snapDesc = *vi;
+		}
+	}
+
+	if (min_dist <= threshold * threshold) return true;
+	else return false;
+
+	/*
 	RoadEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
 		if (!roads.graph[*ei]->valid) continue;
@@ -80,6 +122,7 @@ bool RoadGeneratorHelper::canSnapToVertex(RoadGraph& roads, const QVector2D& pos
 
 	if (min_dist <= threshold * threshold) return true;
 	else return false;
+	*/
 }
 
 /**
@@ -89,11 +132,11 @@ bool RoadGeneratorHelper::canSnapToVertex(RoadGraph& roads, const QVector2D& pos
  * @param pos				エッジ先端
  * @param threshold			距離の閾値
  * @param srcDesc			この頂点からエッジを延ばしている
- * @param area			このエリア内の頂点のみを対象
+ * @param ignoreArea		このエリア内の頂点はスナップ対象としない
  * @param snapDesc			最も近い頂点
  * @return					もしsnapすべき頂点があれば、trueを返却する
  */
-bool RoadGeneratorHelper::canSnapToVertex2(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, const BBox &area, RoadVertexDesc& snapDesc) {
+/*bool RoadGeneratorHelper::canSnapToVertex2(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, const BBox &ignoreArea, RoadVertexDesc& snapDesc) {
 	float min_dist = std::numeric_limits<float>::max();
 
 	RoadEdgeIter ei, eend;
@@ -105,8 +148,8 @@ bool RoadGeneratorHelper::canSnapToVertex2(RoadGraph& roads, const QVector2D& po
 
 		if (src == srcDesc || tgt == srcDesc) continue;
 
-		// 頂点が、area外なら、スキップ
-		if (!area.contains(roads.graph[src]->pt) || !area.contains(roads.graph[tgt]->pt)) continue;
+		// 頂点が、area内なら、スキップ
+		if (ignoreArea.contains(roads.graph[src]->pt) || ignoreArea.contains(roads.graph[tgt]->pt)) continue;
 
 		if (QVector2D::dotProduct(roads.graph[src]->pt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt) > 0) {
 			float dist1 = (roads.graph[src]->pt - pos).lengthSquared();
@@ -127,11 +170,12 @@ bool RoadGeneratorHelper::canSnapToVertex2(RoadGraph& roads, const QVector2D& po
 
 	if (min_dist <= threshold * threshold) return true;
 	else return false;
-}
+}*/
 
 /**
  * 近くのエッジにsnapすべきか、チェックする。
- * srcDescから伸ばしてきたエッジの先端posに近いエッジを探し、エッジの延長方向とのなす角度が90度以下で、距離が閾値以下のものがあるか探す。
+ * ただし、スナップによる変位角は90度未満で、接続された２つのエッジのなす角は45度より大きいこと。
+ * また、スナップによる移動距離が閾値以下であるものの中で、最短のものを選ぶ。
  * 
  * @param pos				エッジ先端
  * @param threshold			距離の閾値
@@ -146,7 +190,7 @@ bool RoadGeneratorHelper::canSnapToEdge(RoadGraph& roads, const QVector2D& pos, 
 	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
 		if (!roads.graph[*ei]->valid) continue;
 
-		// Highwayとは、intersectさせない
+		// Highwayとは、intersectさせない（暫定的な実装）
 		if (roads.graph[*ei]->type == RoadEdge::TYPE_HIGHWAY) continue;
 
 		RoadVertexDesc src = boost::source(*ei, roads.graph);
@@ -157,12 +201,21 @@ bool RoadGeneratorHelper::canSnapToEdge(RoadGraph& roads, const QVector2D& pos, 
 		QVector2D closePt;
 		float dist = GraphUtil::distance(roads, pos, *ei, closePt);
 
-		if (QVector2D::dotProduct(closePt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt) > 0) {
-			if (dist < min_dist) {
-				min_dist = dist;
-				snapEdge = *ei;
-				closestPt = closePt;
-			}
+		// 変位角が90度以上なら、スキップ
+		float phi = Util::diffAngle(closePt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt);
+		if (phi >= M_PI * 0.5f) continue;
+
+		// ２つのエッジのなす角が45度以下なら、スキップ
+		float theta1 = Util::diffAngle(closePt - roads.graph[src]->pt, closePt - roads.graph[srcDesc]->pt);
+		if (theta1 <= M_PI * 0.25f) continue;
+		float theta2 = Util::diffAngle(closePt - roads.graph[tgt]->pt, closePt - roads.graph[srcDesc]->pt);
+		if (theta2 <= M_PI * 0.25f) continue;
+
+
+		if (dist < min_dist) {
+			min_dist = dist;
+			snapEdge = *ei;
+			closestPt = closePt;
 		}
 	}		
 
@@ -177,11 +230,11 @@ bool RoadGeneratorHelper::canSnapToEdge(RoadGraph& roads, const QVector2D& pos, 
  * @param pos				エッジ先端
  * @param threshold			距離の閾値
  * @param srcDesc			この頂点からエッジを延ばしている
- * @param area				この領域内のエッジをスナップ先の対象とする
+ * @param ignoreArea		この領域内のエッジをスナップ先の対象とする
  * @param snapDesc			最も近い頂点
  * @return					もしsnapすべき頂点があれば、trueを返却する
  */
-bool RoadGeneratorHelper::canSnapToEdge2(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, const BBox &area, RoadEdgeDesc& snapEdge, QVector2D &closestPt) {
+/*bool RoadGeneratorHelper::canSnapToEdge2(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, const BBox &ignoreArea, RoadEdgeDesc& snapEdge, QVector2D &closestPt) {
 	float min_dist = std::numeric_limits<float>::max();
 
 	RoadEdgeIter ei, eend;
@@ -196,8 +249,8 @@ bool RoadGeneratorHelper::canSnapToEdge2(RoadGraph& roads, const QVector2D& pos,
 
 		if (src == srcDesc || tgt == srcDesc) continue;
 
-		// 当該エッジが、area外なら、スキップ
-		if (!area.contains(roads.graph[src]->pt) || !area.contains(roads.graph[tgt]->pt)) continue;
+		// 当該エッジが、ignoreArea内なら、スキップ
+		if (ignoreArea.contains(roads.graph[src]->pt) || ignoreArea.contains(roads.graph[tgt]->pt)) continue;
 
 		QVector2D closePt;
 		float dist = GraphUtil::distance(roads, pos, *ei, closePt);
@@ -213,7 +266,7 @@ bool RoadGeneratorHelper::canSnapToEdge2(RoadGraph& roads, const QVector2D& pos,
 
 	if (min_dist < threshold) return true;
 	else return false;
-}
+}*/
 
 /**
  * 指定された位置posに最も近い頂点snapDescを取得し、そこまでの距離を返却する。
@@ -370,15 +423,17 @@ int RoadGeneratorHelper::getClosestItem(const KDEFeature &f, int roadType, const
  * 指定された頂点について、指定されたエッジに似たエッジが既に登録済みかどうかチェックする。
  */
 bool RoadGeneratorHelper::isRedundantEdge(RoadGraph& roads, RoadVertexDesc v_desc, const Polyline2D &polyline) {
+	if (polyline.size() == 0) true;
+
 	RoadOutEdgeIter ei, eend;
 	for (boost::tie(ei, eend) = out_edges(v_desc, roads.graph); ei != eend; ++ei) {
 		if (!roads.graph[*ei]->valid) continue;
 
 		if (roads.graph[*ei]->polyLine.size() <= 1) continue;
-		if (polyline.size() <= 0) continue;
 
 		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 
+		/*
 		Polyline2D edge = roads.graph[*ei]->polyLine;
 		if ((roads.graph[v_desc]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared() > (roads.graph[tgt]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared()) {
 			std::reverse(edge.begin(), edge.end());
@@ -391,6 +446,11 @@ bool RoadGeneratorHelper::isRedundantEdge(RoadGraph& roads, RoadVertexDesc v_des
 			if (index1 == 0) continue;
 
 			if (Util::diffAngle(edge[index1] - edge[0], polyline[index2]) < 0.3f) return true;
+		}
+		*/
+
+		if (Util::diffAngle(roads.graph[tgt]->pt - roads.graph[v_desc]->pt, polyline.last()) < M_PI * 30.0f / 180.0f) {
+			return true;
 		}
 	}
 
@@ -451,55 +511,62 @@ QVector2D RoadGeneratorHelper::modulo(const Polygon2D &area, const QVector2D &pt
 */
 
 /**
- * Example領域を使って、指定された位置（ターゲット領域の中心からのオフセット）のモジュラ位置を返却する。
+ * Example領域を使って、指定された位置のモジュラ位置（Example座標系）を返却する。
  * モジュラ位置は、Example領域のBBoxの中に入る座標となる。
  * ※ 現状の実装では、Axis Aligned BBoxを使用し、Oriented BBoxなどをサポートしていない。
  *
- * @param area		Example領域（Exampleの中心を原点とする座標系）
- * @param pt		ターゲット領域の中心を原点とする座標系での、指定された位置
- * @param bbox		指定された位置が入る、BBox
- * @return			指定された位置をmoduloした結果（Example領域のBBoxの中に入っているはず）
+ * @param targetArea	ターゲット領域
+ * @param exampleArea	Example領域（Exampleの中心を原点とする座標系）
+ * @param pt			指定された位置
+ * @param bbox			指定された位置が入る、BBox（ターゲット座標系）
+ * @return				指定された位置をmoduloした結果（Example座標系）
  */
-QVector2D RoadGeneratorHelper::modulo2(const Polygon2D &area, const QVector2D &pt, BBox &bbox) {
+QVector2D RoadGeneratorHelper::modulo2(const Polygon2D &targetArea, const Polygon2D &exampleArea, const QVector2D &pt, BBox &bbox) {
 	QVector2D ret;
 
-	BBox bboxExample = area.envelope();
+	QVector2D center = targetArea.envelope().midPt();
+	QVector2D offsetPt = pt - center;
 
-	if (pt.x() < bboxExample.minPt.x()) {
-		ret.setX(bboxExample.maxPt.x() - (int)(bboxExample.minPt.x() - pt.x()) % (int)bboxExample.dx());
+	BBox bboxExample = exampleArea.envelope();
 
-		int u = (bboxExample.minPt.x() - pt.x()) / bboxExample.dx() + 1;
+	if (offsetPt.x() < bboxExample.minPt.x()) {
+		ret.setX(bboxExample.maxPt.x() - (int)(bboxExample.minPt.x() - offsetPt.x()) % (int)bboxExample.dx());
+
+		int u = (bboxExample.minPt.x() - offsetPt.x()) / bboxExample.dx() + 1;
 		bbox.minPt.setX(bboxExample.minPt.x() - bboxExample.dx() * u);
 		bbox.maxPt.setX(bboxExample.maxPt.x() - bboxExample.dx() * u);
-	} else if (pt.x() > bboxExample.maxPt.x()) {
-		ret.setX(bboxExample.minPt.x() + (int)(pt.x() - bboxExample.maxPt.x()) % (int)bboxExample.dx());
+	} else if (offsetPt.x() > bboxExample.maxPt.x()) {
+		ret.setX(bboxExample.minPt.x() + (int)(offsetPt.x() - bboxExample.maxPt.x()) % (int)bboxExample.dx());
 
-		int u = (pt.x() - bboxExample.maxPt.x()) / bboxExample.dx() + 1;
+		int u = (offsetPt.x() - bboxExample.maxPt.x()) / bboxExample.dx() + 1;
 		bbox.minPt.setX(bboxExample.minPt.x() + bboxExample.dx() * u);
 		bbox.maxPt.setX(bboxExample.maxPt.x() + bboxExample.dx() * u);
 	} else {
-		ret.setX(pt.x());
+		ret.setX(offsetPt.x());
 		bbox.minPt.setX(bboxExample.minPt.x());
 		bbox.maxPt.setX(bboxExample.maxPt.x());
 	}
 
-	if (pt.y() < bboxExample.minPt.y()) {
-		ret.setY(bboxExample.maxPt.y() - (int)(bboxExample.minPt.y() - pt.y()) % (int)bboxExample.dy());
+	if (offsetPt.y() < bboxExample.minPt.y()) {
+		ret.setY(bboxExample.maxPt.y() - (int)(bboxExample.minPt.y() - offsetPt.y()) % (int)bboxExample.dy());
 
-		int v = (bboxExample.minPt.y() - pt.y()) / bboxExample.dy() + 1;
+		int v = (bboxExample.minPt.y() - offsetPt.y()) / bboxExample.dy() + 1;
 		bbox.minPt.setY(bboxExample.minPt.y() - bboxExample.dy() * v);
 		bbox.maxPt.setY(bboxExample.maxPt.y() - bboxExample.dy() * v);
-	} else if (pt.y() > bboxExample.maxPt.y()) {
-		ret.setY(bboxExample.minPt.y() + (int)(pt.y() - bboxExample.maxPt.y()) % (int)bboxExample.dy());
+	} else if (offsetPt.y() > bboxExample.maxPt.y()) {
+		ret.setY(bboxExample.minPt.y() + (int)(offsetPt.y() - bboxExample.maxPt.y()) % (int)bboxExample.dy());
 
-		int v = (pt.y() - bboxExample.maxPt.y()) / bboxExample.dy() + 1;
+		int v = (offsetPt.y() - bboxExample.maxPt.y()) / bboxExample.dy() + 1;
 		bbox.minPt.setY(bboxExample.minPt.y() + bboxExample.dy() * v);
 		bbox.maxPt.setY(bboxExample.maxPt.y() + bboxExample.dy() * v);
 	} else {
-		ret.setY(pt.y());
+		ret.setY(offsetPt.y());
 		bbox.minPt.setY(bboxExample.minPt.y());
 		bbox.maxPt.setY(bboxExample.maxPt.y());
 	}
+
+	bbox.minPt += center;
+	bbox.maxPt += center;
 
 	return ret;
 }
