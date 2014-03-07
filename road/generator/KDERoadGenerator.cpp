@@ -345,7 +345,7 @@ void KDERoadGenerator::attemptExpansion(RoadGraph &roads, const Polygon2D &area,
 	KDEFeatureItem item = roads.graph[srcDesc]->kernel;
 	if (item.id == -1) {
 		std::cerr << "ERROR: item is not defined." << std::endl;
-		item = getItem2(roads, area, f, roadType, srcDesc);
+		item = getItem(roads, area, f, roadType, srcDesc);
 		roads.graph[srcDesc]->kernel = item;
 	}
 	
@@ -481,7 +481,7 @@ bool KDERoadGenerator::growRoadSegment(RoadGraph &roads, const Polygon2D &area, 
 		seeds.push_back(tgtDesc);
 
 		// 追加した頂点に、カーネルを割り当てる
-		roads.graph[tgtDesc]->kernel = getItem2(roads, area, f, roadType, tgtDesc);
+		roads.graph[tgtDesc]->kernel = getItem(roads, area, f, roadType, tgtDesc);
 	}
 
 	return true;
@@ -626,7 +626,7 @@ bool KDERoadGenerator::growRoadSegment2(RoadGraph &roads, const Polygon2D &area,
 			seeds.push_back(tgtDesc);
 
 			// 追加した頂点に、カーネルを割り当てる
-			roads.graph[tgtDesc]->kernel = getItem2(roads, area, f, roadType, tgtDesc);
+			roads.graph[tgtDesc]->kernel = getItem(roads, area, f, roadType, tgtDesc);
 		} else {
 			if (RoadGeneratorHelper::containsInitialSeed(area, f.area(), pt)) {
 				additionalSeeds.push_back(tgtDesc);
@@ -639,119 +639,15 @@ bool KDERoadGenerator::growRoadSegment2(RoadGraph &roads, const Polygon2D &area,
 
 /**
  * 与えられたエッジの方向、長さを含むデータを検索し、近いものを返却する。
- *
- * @param kf					特徴量
- * @param roadType				道路タイプ
- * @param offsetPosOfVertex		与えられた頂点の、このエリアの中心からのオフセット位置
- */
-KDEFeatureItem KDERoadGenerator::getItem(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, int roadType, RoadVertexDesc v_desc) {
-	// 与えられた頂点の、このエリアの中心からのオフセット位置を計算
-	QVector2D offsetPosOfVertex = roads.graph[v_desc]->pt - area.envelope().midPt();
-
-	// 当該頂点から出るエッジをリストアップする
-	QList<Polyline2D> polylines;
-	QList<RoadVertexDesc> neighbors;
-	RoadOutEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::out_edges(v_desc, roads.graph); ei != eend; ++ei) {
-		if (!roads.graph[*ei]->valid) continue;
-
-		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
-		neighbors.push_back(tgt);
-
-		if ((roads.graph[v_desc]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared() > (roads.graph[tgt]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared()) {
-			std::reverse(roads.graph[*ei]->polyLine.begin(), roads.graph[*ei]->polyLine.end());
-		}
-		polylines.push_back(roads.graph[*ei]->polyLine);
-	}
-
-	// 周辺の頂点のカーネルをリストアップし、最短距離を計算する
-	/*float threshold = 200.0f;
-	if (roadType == RoadEdge::TYPE_STREET) {
-		threshold = 10.0f;
-	}
-	float threshold2 = threshold * threshold;*/
-	QMap<int, float> neighborKernels;
-	RoadVertexIter vi, vend;
-	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
-		if (!roads.graph[*vi]->valid) continue;
-
-		// 自分自身ならスキップ
-		if (*vi == v_desc) continue;
-
-		//if ((roads.graph[*vi]->pt - roads.graph[v_desc]->pt).lengthSquared() <= threshold2) {
-			float min_dist = std::numeric_limits<float>::max();
-			if (neighborKernels.contains(roads.graph[*vi]->kernel.id)) {
-				min_dist = neighborKernels[roads.graph[*vi]->kernel.id];
-			}
-			float dist = (roads.graph[*vi]->pt - roads.graph[v_desc]->pt).length();
-			if (dist < min_dist) {
-				neighborKernels[roads.graph[*vi]->kernel.id] = dist;
-			}
-		//}
-	}
-
-	// 各カーネルについて、非類似度スコアを計算する
-	//float edge_weight = 1.0f;
-	//float location_weight = 1.0f;
-	//float repetition_weight = 2000000.0f;
-
-	float min_diff = std::numeric_limits<float>::max();
-	int min_index = -1;
-	for (int i = 0; i < kf.items(roadType).size(); ++i) {
-		// 繰り返し度を計算
-		float repetition = 0.0f;
-		if (neighborKernels.contains(kf.items(roadType)[i].id)) {
-			repetition = 1.0f / neighborKernels[kf.items(roadType)[i].id];
-		}
-
-		// エッジの非類似度を計算
-		float edge_diff = 0.0f;
-		for (int j = 0; j < polylines.size(); ++j) {
-			edge_diff += kf.items(roadType)[i].getMinDistance(polylines[j]);
-		}		
-
-		// 位置の非類似度を計算
-		float location_diff = 0.0f;
-		//if (kf.area().contains(offsetPosOfVertex)) { // 位置が元のエリア内なら
-		//	location_diff += (kf.items(roadType)[i].pt - offsetPosOfVertex).length();
-		//} else {
-			for (int j = 0; j < neighbors.size(); ++j) { // 位置が元のエリア外なら、隣接頂点のカーネルの共起性を考慮
-				location_diff += (roads.graph[neighbors[j]]->kernel.pt - polylines[j].last() + polylines[j][0] - kf.items(roadType)[i].pt).length();
-			}
-		//}
-
-		// フィッティングスコアを計算
-		float diff;
-		if (kf.area().contains(offsetPosOfVertex)) { // 位置が元のエリア内なら
-			diff = location_diff;
-		} else {
-			diff = edge_diff * G::getFloat("weightEdge") + location_diff * G::getFloat("weightLocation") + repetition * G::getFloat("weightRepetition");
-		}
-		if (diff < min_diff) {
-			min_diff = diff;
-			min_index = i;
-		}
-	}
-
-	KDEFeatureItem item = kf.items(roadType)[min_index];
-
-	return item;
-}
-
-/**
- * 与えられたエッジの方向、長さを含むデータを検索し、近いものを返却する。
  * 繰り返しを防ぐために、モジュラを実装。
  *
  * @param kf					特徴量
  * @param roadType				道路タイプ
  * @param offsetPosOfVertex		与えられた頂点の、このエリアの中心からのオフセット位置
  */
-KDEFeatureItem KDERoadGenerator::getItem2(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, int roadType, RoadVertexDesc v_desc) {
+KDEFeatureItem KDERoadGenerator::getItem(RoadGraph &roads, const Polygon2D &area, const KDEFeature& kf, int roadType, RoadVertexDesc v_desc) {
 	BBox currentBBox;
 	RoadGeneratorHelper::modulo2(area, kf.area(), roads.graph[v_desc]->pt, currentBBox);
-
-	// 与えられた頂点の、このエリアの中心からのオフセット位置を計算
-	//QVector2D offsetPosOfVertex = roads.graph[v_desc]->pt - area.envelope().midPt();
 
 	// 当該頂点から出るエッジをリストアップする
 	QList<Polyline2D> polylines;
@@ -940,7 +836,7 @@ void KDERoadGenerator::connectAvenues2(RoadGraph &roads, const Polygon2D &area, 
 
 	// 近くに頂点があれば、スナップする
 	RoadVertexDesc snapDesc;
-	if (RoadGeneratorHelper::canSnapToVertex(roads, roads.graph[v_desc]->pt, threshold, srcDesc, snapDesc, true)) {
+	if (RoadGeneratorHelper::canSnapToVertex2(roads, roads.graph[v_desc]->pt, threshold, srcDesc, snapDesc)) {
 		GraphUtil::snapVertex(roads, v_desc, snapDesc);
 		return;
 	}

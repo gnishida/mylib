@@ -42,6 +42,67 @@ bool RoadGeneratorHelper::intersects(RoadGraph &roads, const QVector2D& p0, cons
 /**
  * 近くの頂点にsnapすべきか、チェックする。
  * srcDescから伸ばしてきたエッジの先端posに近い頂点を探す。
+ * ただし、スナップによる変位角は90度未満で、スナップ先頂点とのなす角の最小値は45度より大きいこと。
+ * また、スナップによる移動距離が閾値以下であるものの中で、最短のものを選ぶ。
+ * 
+ * @param pos				エッジ先端
+ * @param threshold			距離の閾値
+ * @param srcDesc			この頂点からエッジを延ばしている
+ * @param snapDesc			最も近い頂点
+ * @return					もしsnapすべき頂点があれば、trueを返却する
+ */
+bool RoadGeneratorHelper::canSnapToVertex(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, RoadVertexDesc& snapDesc) {
+	float min_dist = std::numeric_limits<float>::max();
+
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
+		if (!roads.graph[*vi]->valid) continue;
+
+		if (GraphUtil::getDegree(roads, *vi) == 0) continue;
+
+		// スナップによる変位角
+		float phi = Util::diffAngle(pos - roads.graph[srcDesc]->pt, roads.graph[*vi]->pt - roads.graph[srcDesc]->pt);
+		if (phi >= M_PI * 0.5f) continue;
+
+		bool okay = true;
+		RoadOutEdgeIter ei, eend;
+		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads.graph); ei != eend; ++ei) {
+			if (!roads.graph[*ei]->valid) continue;
+
+			RoadVertexDesc v2 = boost::target(*ei, roads.graph);
+
+			// 自分自身には、スナップしない
+			if (v2 == srcDesc) {
+				okay = false;
+				break;
+			}
+		
+
+			// ２つのエッジのなす角
+			float theta = Util::diffAngle(roads.graph[*vi]->pt - roads.graph[v2]->pt, roads.graph[*vi]->pt - roads.graph[srcDesc]->pt);
+			if (theta <= M_PI * 0.25f) {
+				okay = false;
+				break;
+			}
+		}
+
+		if (!okay) continue;
+
+		float dist2 = (roads.graph[*vi]->pt - pos).lengthSquared();
+		if (dist2 < min_dist) {
+			min_dist = dist2;
+			snapDesc = *vi;
+		}
+	}
+
+	if (min_dist <= threshold * threshold) return true;
+	else return false;
+}
+
+/**
+ * 近くの頂点にsnapすべきか、チェックする。
+ * （この関数は、additionalSeeds用のスナップ関数）
+ * srcDescから伸ばしてきたエッジの先端posに近い頂点を探す。
  * ただし、スナップによる変位角は90度未満で、接続された２つのエッジのなす角は90度より大きいこと。
  * また、スナップによる移動距離が閾値以下であるものの中で、最短のものを選ぶ。
  * 
@@ -51,36 +112,40 @@ bool RoadGeneratorHelper::intersects(RoadGraph &roads, const QVector2D& p0, cons
  * @param snapDesc			最も近い頂点
  * @return					もしsnapすべき頂点があれば、trueを返却する
  */
-bool RoadGeneratorHelper::canSnapToVertex(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, RoadVertexDesc& snapDesc, bool onlySnapToDegreeOne) {
+bool RoadGeneratorHelper::canSnapToVertex2(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, RoadVertexDesc& snapDesc) {
 	float min_dist = std::numeric_limits<float>::max();
 
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
 		if (!roads.graph[*vi]->valid) continue;
 
-		if (onlySnapToDegreeOne && GraphUtil::getDegree(roads, *vi) != 1) continue;
+		if (GraphUtil::getDegree(roads, *vi) != 1) continue;
 
 		// もう一方の端点を取得
+		bool isolated = true;
 		RoadVertexDesc v2;
 		RoadOutEdgeIter ei, eend;
 		for (boost::tie(ei, eend) = boost::out_edges(*vi, roads.graph); ei != eend; ++ei) {
 			if (!roads.graph[*ei]->valid) continue;
 
 			v2 = boost::target(*ei, roads.graph);
+			isolated = false;
 			break;
 		}
+
+		// もう一方の端点がない場合は、スキップ
+		if (isolated) continue;
 
 		// 自分自身には、スナップしない
 		if (v2 == srcDesc) continue;
 
-		// スナップによる変位角が90度以上なら、スキップ
+		// スナップによる変位角
 		float phi = Util::diffAngle(pos - roads.graph[srcDesc]->pt, roads.graph[*vi]->pt - roads.graph[srcDesc]->pt);
-		//if (phi >= M_PI * 0.5f) continue;
 
-		// ２つのエッジのなす角が90度以下なら、スキップ
+		// ２つのエッジのなす角
 		float theta = Util::diffAngle(roads.graph[*vi]->pt - roads.graph[v2]->pt, roads.graph[*vi]->pt - roads.graph[srcDesc]->pt);
-		//if (theta <= M_PI * 0.5f) continue;
 
+		// スナップによる変位角が、２つのエッジのなす角の半分より大きい場合は、スキップ
 		if (phi > theta * 0.5f) continue;
 
 		float dist2 = (roads.graph[*vi]->pt - pos).lengthSquared();
@@ -92,85 +157,7 @@ bool RoadGeneratorHelper::canSnapToVertex(RoadGraph& roads, const QVector2D& pos
 
 	if (min_dist <= threshold * threshold) return true;
 	else return false;
-
-	/*
-	RoadEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
-		if (!roads.graph[*ei]->valid) continue;
-
-		RoadVertexDesc src = boost::source(*ei, roads.graph);
-		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
-
-		if (src == srcDesc || tgt == srcDesc) continue;
-
-		if (QVector2D::dotProduct(roads.graph[src]->pt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt) > 0) {
-			float dist1 = (roads.graph[src]->pt - pos).lengthSquared();
-			if (dist1 < min_dist) {
-				min_dist = dist1;
-				snapDesc = src;
-			}
-		}
-
-		if (QVector2D::dotProduct(roads.graph[tgt]->pt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt) > 0) {
-			float dist2 = (roads.graph[tgt]->pt - pos).lengthSquared();
-			if (dist2 < min_dist) {
-				min_dist = dist2;
-				snapDesc = tgt;
-			}
-		}
-	}
-
-	if (min_dist <= threshold * threshold) return true;
-	else return false;
-	*/
 }
-
-/**
- * 近くの頂点にsnapすべきか、チェックする。
- * srcDescから伸ばしてきたエッジの先端posに近い頂点を探し、エッジの延長方向とのなす角度が90度以下で、距離が閾値以下のものがあるか探す。
- * 
- * @param pos				エッジ先端
- * @param threshold			距離の閾値
- * @param srcDesc			この頂点からエッジを延ばしている
- * @param ignoreArea		このエリア内の頂点はスナップ対象としない
- * @param snapDesc			最も近い頂点
- * @return					もしsnapすべき頂点があれば、trueを返却する
- */
-/*bool RoadGeneratorHelper::canSnapToVertex2(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, const BBox &ignoreArea, RoadVertexDesc& snapDesc) {
-	float min_dist = std::numeric_limits<float>::max();
-
-	RoadEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
-		if (!roads.graph[*ei]->valid) continue;
-
-		RoadVertexDesc src = boost::source(*ei, roads.graph);
-		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
-
-		if (src == srcDesc || tgt == srcDesc) continue;
-
-		// 頂点が、area内なら、スキップ
-		if (ignoreArea.contains(roads.graph[src]->pt) || ignoreArea.contains(roads.graph[tgt]->pt)) continue;
-
-		if (QVector2D::dotProduct(roads.graph[src]->pt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt) > 0) {
-			float dist1 = (roads.graph[src]->pt - pos).lengthSquared();
-			if (dist1 < min_dist) {
-				min_dist = dist1;
-				snapDesc = src;
-			}
-		}
-
-		if (QVector2D::dotProduct(roads.graph[tgt]->pt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt) > 0) {
-			float dist2 = (roads.graph[tgt]->pt - pos).lengthSquared();
-			if (dist2 < min_dist) {
-				min_dist = dist2;
-				snapDesc = tgt;
-			}
-		}
-	}
-
-	if (min_dist <= threshold * threshold) return true;
-	else return false;
-}*/
 
 /**
  * 近くのエッジにsnapすべきか、チェックする。
@@ -222,51 +209,6 @@ bool RoadGeneratorHelper::canSnapToEdge(RoadGraph& roads, const QVector2D& pos, 
 	if (min_dist < threshold) return true;
 	else return false;
 }
-
-/**
- * 近くのエッジにsnapすべきか、チェックする。
- * srcDescから伸ばしてきたエッジの先端posに近いエッジを探し、エッジの延長方向とのなす角度が90度以下で、距離が閾値以下のものがあるか探す。
- * 
- * @param pos				エッジ先端
- * @param threshold			距離の閾値
- * @param srcDesc			この頂点からエッジを延ばしている
- * @param ignoreArea		この領域内のエッジをスナップ先の対象とする
- * @param snapDesc			最も近い頂点
- * @return					もしsnapすべき頂点があれば、trueを返却する
- */
-/*bool RoadGeneratorHelper::canSnapToEdge2(RoadGraph& roads, const QVector2D& pos, float threshold, RoadVertexDesc srcDesc, const BBox &ignoreArea, RoadEdgeDesc& snapEdge, QVector2D &closestPt) {
-	float min_dist = std::numeric_limits<float>::max();
-
-	RoadEdgeIter ei, eend;
-	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
-		if (!roads.graph[*ei]->valid) continue;
-
-		// Highwayとは、intersectさせない
-		if (roads.graph[*ei]->type == RoadEdge::TYPE_HIGHWAY) continue;
-
-		RoadVertexDesc src = boost::source(*ei, roads.graph);
-		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
-
-		if (src == srcDesc || tgt == srcDesc) continue;
-
-		// 当該エッジが、ignoreArea内なら、スキップ
-		if (ignoreArea.contains(roads.graph[src]->pt) || ignoreArea.contains(roads.graph[tgt]->pt)) continue;
-
-		QVector2D closePt;
-		float dist = GraphUtil::distance(roads, pos, *ei, closePt);
-
-		if (QVector2D::dotProduct(closePt - roads.graph[srcDesc]->pt, pos - roads.graph[srcDesc]->pt) > 0) {
-			if (dist < min_dist) {
-				min_dist = dist;
-				snapEdge = *ei;
-				closestPt = closePt;
-			}
-		}
-	}		
-
-	if (min_dist < threshold) return true;
-	else return false;
-}*/
 
 /**
  * 指定された位置posに最も近い頂点snapDescを取得し、そこまでの距離を返却する。
