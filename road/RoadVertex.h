@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <QVector2D>
+#include <QVector3D>
 #include <QHash>
 #include <QVariant>
 #include <boost/shared_ptr.hpp>
@@ -10,6 +11,7 @@
 class RoadVertex {
 public:
 	QVector2D pt;
+	QVector3D pt3D;
 	bool valid;
 	bool seed;
 

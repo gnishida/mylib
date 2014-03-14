@@ -17,11 +17,11 @@ bool RoadGeneratorHelper::intersects(RoadGraph &roads, const QVector2D& p0, cons
 		// Highwayとはintersectしない
 		if (roads.graph[*ei]->type == RoadEdge::TYPE_HIGHWAY) continue;
 
-		for (int i = 0; i < roads.graph[*ei]->polyLine.size() - 1; ++i) {
+		for (int i = 0; i < roads.graph[*ei]->polyline.size() - 1; ++i) {
 			//if new segment intersects other segment
 			QVector2D intPt;
 			float tab, tcd;
-			if (Util::segmentSegmentIntersectXY(p0, p1, roads.graph[*ei]->polyLine[i], roads.graph[*ei]->polyLine[i + 1], &tab, &tcd, true, intPt)) {
+			if (Util::segmentSegmentIntersectXY(p0, p1, roads.graph[*ei]->polyline[i], roads.graph[*ei]->polyline[i + 1], &tab, &tcd, true, intPt)) {
 				float dist = (p0 - intPt).lengthSquared();
 
 				//make sure we get only closest segment
@@ -103,16 +103,23 @@ bool RoadGeneratorHelper::canSnapToVertex(RoadGraph& roads, const QVector2D pos,
  * （この関数は、additionalSeeds用のスナップ関数）
  * srcDescから伸ばしてきたエッジの先端posに近い頂点を探す。
  * ただし、スナップによる変位角は90度未満で、接続された２つのエッジのなす角は90度より大きいこと。
+ * さらに、スナップの結果、他のエッジの交差するものは除外する。
  * また、スナップによる移動距離が閾値以下であるものの中で、最短のものを選ぶ。
  * 
  * @param pos				エッジ先端
  * @param threshold			距離の閾値
  * @param srcDesc			この頂点からエッジを延ばしている
+ * @param edge				このエッジ
  * @param snapDesc			最も近い頂点
  * @return					もしsnapすべき頂点があれば、trueを返却する
  */
-bool RoadGeneratorHelper::canSnapToVertex2(RoadGraph& roads, const QVector2D pos, float threshold, RoadVertexDesc srcDesc, RoadVertexDesc& snapDesc) {
+bool RoadGeneratorHelper::canSnapToVertex2(RoadGraph& roads, const QVector2D pos, float threshold, RoadVertexDesc srcDesc, RoadEdgeDesc edge, RoadVertexDesc& snapDesc) {
 	float min_dist = std::numeric_limits<float>::max();
+
+	Polyline2D polyline = roads.graph[edge]->polyline;
+	if ((polyline[0] - roads.graph[srcDesc]->pt).lengthSquared() > (polyline.last() - roads.graph[srcDesc]->pt).lengthSquared()) {
+		std::reverse(polyline.begin(), polyline.end());
+	}
 
 	RoadVertexIter vi, vend;
 	for (boost::tie(vi, vend) = boost::vertices(roads.graph); vi != vend; ++vi) {
@@ -149,8 +156,13 @@ bool RoadGeneratorHelper::canSnapToVertex2(RoadGraph& roads, const QVector2D pos
 
 		float dist2 = (roads.graph[*vi]->pt - pos).lengthSquared();
 		if (dist2 < min_dist) {
-			min_dist = dist2;
-			snapDesc = *vi;
+			// 交差するかチェック
+			Polyline2D tempPolyline = polyline;
+			GraphUtil::movePolyline(roads, tempPolyline, roads.graph[srcDesc]->pt, roads.graph[*vi]->pt);
+			if (!GraphUtil::isIntersect(roads, tempPolyline, edge)) {
+				min_dist = dist2;
+				snapDesc = *vi;
+			}
 		}
 	}
 
@@ -263,8 +275,8 @@ float RoadGeneratorHelper::getNearestEdge(RoadGraph& roads, const QVector2D& pt,
 		if (src == srcDesc || tgt == srcDesc) continue;
 
 		QVector2D pt2;
-		for (int i = 0; i < roads.graph[*ei]->polyLine.size() - 1; i++) {
-			float dist = Util::pointSegmentDistanceXY(roads.graph[*ei]->polyLine[i], roads.graph[*ei]->polyLine[i + 1], pt, pt2);
+		for (int i = 0; i < roads.graph[*ei]->polyline.size() - 1; i++) {
+			float dist = Util::pointSegmentDistanceXY(roads.graph[*ei]->polyline[i], roads.graph[*ei]->polyline[i + 1], pt, pt2);
 			if (dist < min_dist) {
 				min_dist = dist;
 				snapEdge = *ei;
@@ -370,7 +382,7 @@ bool RoadGeneratorHelper::isRedundantEdge(RoadGraph& roads, RoadVertexDesc v_des
 	for (boost::tie(ei, eend) = out_edges(v_desc, roads.graph); ei != eend; ++ei) {
 		if (!roads.graph[*ei]->valid) continue;
 
-		if (roads.graph[*ei]->polyLine.size() <= 1) continue;
+		if (roads.graph[*ei]->polyline.size() <= 1) continue;
 
 		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 
@@ -542,7 +554,7 @@ void RoadGeneratorHelper::buildGraphFromKernel(RoadGraph& roads, const KDEFeatur
 		}
 
 		RoadEdgeDesc e_desc = GraphUtil::addEdge(roads, v_desc, u_desc, 1, false);
-		roads.graph[e_desc]->polyLine = polyline;
+		roads.graph[e_desc]->polyline = polyline;
 		roads.graph[e_desc]->color = QColor(192, 192, 255);
 		roads.graph[e_desc]->bgColor = QColor(0, 0, 192);
 	}
@@ -562,9 +574,9 @@ void RoadGeneratorHelper::saveSnappingImage(RoadGraph &roads, const Polygon2D &a
 	for (boost::tie(ei, eend) = boost::edges(roads.graph); ei != eend; ++ei) {
 		if (!roads.graph[*ei]->valid) continue;
 
-		for (int i = 0; i < roads.graph[*ei]->polyLine.size() - 1; ++i) {
-			QVector2D pt1 = roads.graph[*ei]->polyLine[i] - bbox.minPt;
-			QVector2D pt2 = roads.graph[*ei]->polyLine[i + 1] - bbox.minPt;
+		for (int i = 0; i < roads.graph[*ei]->polyline.size() - 1; ++i) {
+			QVector2D pt1 = roads.graph[*ei]->polyline[i] - bbox.minPt;
+			QVector2D pt2 = roads.graph[*ei]->polyline[i + 1] - bbox.minPt;
 			cv::line(mat, cv::Point(pt1.x(), pt1.y()), cv::Point(pt2.x(), pt2.y()), cv::Scalar(128, 128, 128), 3, CV_AA);
 		}
 	}

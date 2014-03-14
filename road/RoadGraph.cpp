@@ -111,12 +111,12 @@ void RoadGraph::addMeshFromEdge(RenderablePtr renderable, RoadEdgePtr edge, floa
 		break;
 	}
 
-	int num = edge->polyLine.size();
+	int num = edge->polyline.size();
 
 	// draw the edge
 	for (int i = 0; i < num - 1; ++i) {
-		QVector2D pt1 = edge->polyLine[i];
-		QVector2D pt2 = edge->polyLine[i + 1];
+		QVector2D pt1 = edge->polyline[i];
+		QVector2D pt2 = edge->polyline[i + 1];
 		QVector2D vec = pt2 - pt1;
 		vec = QVector2D(-vec.y(), vec.x());
 		vec.normalize();

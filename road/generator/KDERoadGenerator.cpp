@@ -505,7 +505,7 @@ bool KDERoadGenerator::growRoadSegment(RoadGraph &roads, const Polygon2D &area, 
 
 	// エッジを追加
 	RoadEdgeDesc e = GraphUtil::addEdge(roads, srcDesc, tgtDesc, roadType, 1);
-	roads.graph[e]->polyLine = polyline;
+	roads.graph[e]->polyline = polyline;
 
 	// シードに追加
 	if (toBeSeed) {
@@ -546,10 +546,10 @@ KDEFeatureItem KDERoadGenerator::getItem(RoadGraph &roads, const Polygon2D &area
 		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 		neighbors.push_back(tgt);
 
-		if ((roads.graph[v_desc]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared() > (roads.graph[tgt]->pt - roads.graph[*ei]->polyLine[0]).lengthSquared()) {
-			std::reverse(roads.graph[*ei]->polyLine.begin(), roads.graph[*ei]->polyLine.end());
+		if ((roads.graph[v_desc]->pt - roads.graph[*ei]->polyline[0]).lengthSquared() > (roads.graph[tgt]->pt - roads.graph[*ei]->polyline[0]).lengthSquared()) {
+			std::reverse(roads.graph[*ei]->polyline.begin(), roads.graph[*ei]->polyline.end());
 		}
-		polylines.push_back(roads.graph[*ei]->polyLine);
+		polylines.push_back(roads.graph[*ei]->polyline);
 	}
 
 	// 周辺の頂点のカーネルをリストアップし、最短距離を計算する
@@ -666,14 +666,14 @@ void KDERoadGenerator::connectAvenues(RoadGraph &roads, const Polygon2D &area, c
 
 	// 近くに頂点があれば、スナップする
 	RoadVertexDesc snapDesc;
-	if (RoadGeneratorHelper::canSnapToVertex2(roads, roads.graph[v_desc]->pt, threshold, srcDesc, snapDesc)) {
+	if (RoadGeneratorHelper::canSnapToVertex2(roads, roads.graph[v_desc]->pt, threshold, srcDesc, srcEdge, snapDesc)) {
 		GraphUtil::snapVertex(roads, v_desc, snapDesc);
 
 		if (G::getBool("saveConnectingImages")) {
-			Polyline2D old_polyline = roads.graph[srcEdge]->polyLine;
+			Polyline2D old_polyline = roads.graph[srcEdge]->polyline;
 			RoadEdgeDesc new_edge = GraphUtil::getEdge(roads, srcDesc, snapDesc);
 
-			RoadGeneratorHelper::saveSnappingImage(roads, area, srcDesc, old_polyline, roads.graph[new_edge]->polyLine, snapDesc, "connect"); 
+			RoadGeneratorHelper::saveSnappingImage(roads, area, srcDesc, old_polyline, roads.graph[new_edge]->polyline, snapDesc, "connect"); 
 		}
 
 		return;
@@ -731,10 +731,10 @@ void KDERoadGenerator::connectRoads(RoadGraph &roads, RoadAreaSet &areas, float 
 		RoadEdgeDesc e_desc = boundaryEdges[v_desc];
 
 		QVector2D step;
-		if ((roads.graph[v_desc]->pt - roads.graph[e_desc]->polyLine[0]).lengthSquared() <= (roads.graph[v2_desc]->pt - roads.graph[e_desc]->polyLine[0]).lengthSquared()) {
-			step = roads.graph[e_desc]->polyLine[0] - roads.graph[e_desc]->polyLine[1];
+		if ((roads.graph[v_desc]->pt - roads.graph[e_desc]->polyline[0]).lengthSquared() <= (roads.graph[v2_desc]->pt - roads.graph[e_desc]->polyline[0]).lengthSquared()) {
+			step = roads.graph[e_desc]->polyline[0] - roads.graph[e_desc]->polyline[1];
 		} else {
-			step = roads.graph[e_desc]->polyLine.last() - roads.graph[e_desc]->polyLine[roads.graph[e_desc]->polyLine.size() - 2];
+			step = roads.graph[e_desc]->polyline.last() - roads.graph[e_desc]->polyline[roads.graph[e_desc]->polyline.size() - 2];
 		}
 		step = step.normalized() * 20.0f;
 
