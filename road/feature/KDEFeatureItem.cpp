@@ -6,8 +6,8 @@
 #include "../../common/Util.h"
 #include "KDEFeatureItem.h"
 
-void KDEFeatureItem::addEdge(const Polyline2D &polyline, bool deadend, bool onBoundary) {
-	edges.push_back(KDEFeatureItemEdge(polyline, deadend, onBoundary));
+void KDEFeatureItem::addEdge(const Polyline2D &polyline, int lanes, bool deadend, bool onBoundary) {
+	edges.push_back(KDEFeatureItemEdge(polyline, lanes, deadend, onBoundary));
 }
 
 /**
@@ -93,7 +93,7 @@ void KDEFeatureItem::load(QDomNode& node) {
 				child2 = child2.nextSibling();
 			}
 
-			edges.push_back(KDEFeatureItemEdge(polyline, child.toElement().attribute("deadend") == "true", child.toElement().attribute("onBoundary") == "true"));
+			edges.push_back(KDEFeatureItemEdge(polyline, child.toElement().attribute("lanes").toFloat(), child.toElement().attribute("deadend") == "true", child.toElement().attribute("onBoundary") == "true"));
 		}
 
 		child = child.nextSibling();
@@ -103,6 +103,8 @@ void KDEFeatureItem::load(QDomNode& node) {
 void KDEFeatureItem::save(QDomDocument& doc, QDomNode& node) {
 	for (int i = 0; i < edges.size(); ++i) {
 		QDomElement node_edge = doc.createElement("edge");
+
+		node_edge.setAttribute("lanes", edges[i].lanes);
 
 		QString str;
 		if (edges[i].deadend) {

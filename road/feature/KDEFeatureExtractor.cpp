@@ -33,7 +33,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	end = clock();
 	std::cout << "Elapsed time for cleaning the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 	start = clock();
-	GraphUtil::reduce(temp_roads);
+	//GraphUtil::reduce(temp_roads);
 	end = clock();
 	std::cout << "Elapsed time for reducing the avenues: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 
@@ -46,7 +46,7 @@ void KDEFeatureExtractor::extractFeature(RoadGraph& roads, Polygon2D& area, Road
 	end = clock();
 	std::cout << "Elapsed time for removing links: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 	start = clock();
-	GraphUtil::reduce(temp_roads);
+	//GraphUtil::reduce(temp_roads);
 	end = clock();
 	std::cout << "Elapsed time for reducing links: " << (double)(end-start)/CLOCKS_PER_SEC << " [sec]" << std::endl;
 	GraphUtil::removeIsolatedVertices(temp_roads);
@@ -154,6 +154,9 @@ int KDEFeatureExtractor::extractAvenueFeature(RoadGraph &orig_roads, const Polyg
 		KDEFeatureItem item(kf->numItems(RoadEdge::TYPE_AVENUE));
 		item.pt = roads.graph[*vi]->pt - center;
 
+		// Streetとの交差点かどうか、登録
+		item.streetSeed = GraphUtil::getDegree(roads, *vi) == 2 ? true : false;
+
 		// 近接頂点までの距離を登録
 		RoadVertexDesc nearestVertexDesc = GraphUtil::getVertex(roads, roads.graph[*vi]->pt, *vi);
 		item.territory = (roads.graph[nearestVertexDesc]->pt - roads.graph[*vi]->pt).length();
@@ -178,7 +181,7 @@ int KDEFeatureExtractor::extractAvenueFeature(RoadGraph &orig_roads, const Polyg
 			polyline.erase(polyline.begin());
 
 			// 道路ユニットにエッジジオミトリを登録する
-			item.addEdge(polyline, degree == 1, roads.graph[tgt]->onBoundary);
+			item.addEdge(polyline, roads.graph[*ei]->lanes, degree == 1, roads.graph[tgt]->onBoundary);
 		}
 
 		kf->addItem(RoadEdge::TYPE_AVENUE, item);
@@ -252,7 +255,7 @@ int KDEFeatureExtractor::extractStreetFeature(RoadGraph &orig_roads, const Polyg
 			polyline.translate(-roads.graph[*vi]->pt);
 
 			// 道路ユニットにエッジジオミトリを登録する
-			item.addEdge(polyline, degree == 1, false);
+			item.addEdge(polyline, roads.graph[*ei]->lanes, degree == 1, false);
 		}
 
 		kf->addItem(RoadEdge::TYPE_STREET, item);

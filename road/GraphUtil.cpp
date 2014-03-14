@@ -871,13 +871,13 @@ bool GraphUtil::isIntersect(RoadGraph &roads, std::vector<QVector2D>& polyline1,
 /**
  * Simplify a polyline.
  */
-std::vector<QVector2D> GraphUtil::simplifyPolyLine(std::vector<QVector2D>& polyLine, float threshold) {
+std::vector<QVector2D> GraphUtil::simplifyPolyLine(std::vector<QVector2D>& polyline, float threshold) {
 	std::vector<QVector2D> ret;
 	
 	typedef boost::geometry::model::d2::point_xy<double> xy;
 	boost::geometry::model::linestring<xy> line;
-	for (int i = 0; i < polyLine.size(); i++) {
-		line.push_back(xy(polyLine[i].x(), polyLine[i].y()));
+	for (int i = 0; i < polyline.size(); i++) {
+		line.push_back(xy(polyline[i].x(), polyline[i].y()));
 	}
 
 	boost::geometry::model::linestring<xy> simplified;
@@ -928,18 +928,18 @@ void GraphUtil::realize(RoadGraph& roads) {
  * Make the edge finer by inserting more points along the polyline.
  */
 Polyline2D GraphUtil::finerEdge(RoadGraph& roads, RoadEdgeDesc e, float step) {
-	Polyline2D polyLine;
+	Polyline2D polyline;
 
 	for (int i = 0; i < roads.graph[e]->polyline.size() - 1; i++) {
 		QVector2D vec = roads.graph[e]->polyline[i + 1] - roads.graph[e]->polyline[i];
 		float length = vec.length();
 		for (int j = 0; j < length; j += step) {
-			polyLine.push_back(roads.graph[e]->polyline[i] + vec * (float)j / length);
+			polyline.push_back(roads.graph[e]->polyline[i] + vec * (float)j / length);
 		}
 	}
-	polyLine.push_back(roads.graph[e]->polyline.last());
+	polyline.push_back(roads.graph[e]->polyline.last());
 
-	return polyLine;
+	return polyline;
 }
 
 /**
@@ -1412,7 +1412,6 @@ void GraphUtil::extractRoads2(RoadGraph& roads, const Polygon2D& area, int roadT
 	}
 
 	removeIsolatedVertices(roads);
-	reduce(roads);
 
 	roads.setModified();
 }

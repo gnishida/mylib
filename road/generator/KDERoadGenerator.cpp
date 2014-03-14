@@ -76,17 +76,14 @@ void KDERoadGenerator::generateRoadNetwork(RoadGraph &roads, const Polygon2D &ar
 	}
 
 	// clean up
-	GraphUtil::clean(roads);
+	//GraphUtil::clean(roads);
 	//GraphUtil::reduce(roads);
 	//GraphUtil::clean(roads);
 
-	if (!G::getBool("generateLocalStreets")) {
-		GraphUtil::clean(roads);
-		return;
-	}
+	if (!G::getBool("generateLocalStreets")) return;
 
 	// Local streetを生成
-	generateStreetSeeds(roads, area, kf, seeds);
+	generateStreetSeeds2(roads, area, kf, seeds);
 
 	for (int i = 0; !seeds.empty() && i < G::getInt("numIterations"); ++i) {
 		RoadVertexDesc desc = seeds.front();
@@ -334,6 +331,23 @@ void KDERoadGenerator::generateStreetSeeds(RoadGraph &roads, const Polygon2D &ar
 		//v->seed = true;
 		RoadVertexDesc desc = GraphUtil::addVertex(roads, v);
 		seeds.push_back(desc);
+	}
+}
+
+/**
+ * Local street用のシードを生成する。
+ * Avenueが既に生成済みであることを前提とする。streetSeedフラグがtrueのAvenue頂点をシードとする。
+ */
+void KDERoadGenerator::generateStreetSeeds2(RoadGraph &roads, const Polygon2D &area, const KDEFeature& f, std::list<RoadVertexDesc>& seeds) {
+	RoadVertexIter vi, vend;
+	for (boost::tie(vi, vend) = vertices(roads.graph); vi != vend; ++vi) {
+		if (!roads.graph[*vi]->valid) continue;
+
+		if (roads.graph[*vi]->kernel.streetSeed) {
+			seeds.push_back(*vi);
+		} else if (GraphUtil::getDegree(roads, *vi) == 2) {
+			seeds.push_back(*vi);
+		}
 	}
 }
 
