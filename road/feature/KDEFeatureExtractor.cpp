@@ -164,7 +164,7 @@ int KDEFeatureExtractor::extractAvenueFeature(RoadGraph &orig_roads, const Polyg
 			RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 			int degree = GraphUtil::getNumEdges(roads, tgt);
 
-			Polyline2D polyline = roads.graph[*ei]->polyLine;
+			Polyline2D polyline = roads.graph[*ei]->polyline;
 
 			// エッジジオミトリの順番を、当該頂点から出発するように並べ替える
 			if ((polyline[0] - roads.graph[*vi]->pt).lengthSquared() > (polyline[0] - roads.graph[tgt]->pt).lengthSquared()) {
@@ -241,7 +241,7 @@ int KDEFeatureExtractor::extractStreetFeature(RoadGraph &orig_roads, const Polyg
 			RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 			int degree = GraphUtil::getNumEdges(roads, tgt);
 
-			Polyline2D polyline = roads.graph[*ei]->polyLine;
+			Polyline2D polyline = roads.graph[*ei]->polyline;
 
 			// エッジジオミトリの順番を、当該頂点から出発するように並べ替える
 			if ((polyline[0] - roads.graph[*vi]->pt).lengthSquared() > (polyline[0] - roads.graph[tgt]->pt).lengthSquared()) {
