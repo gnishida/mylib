@@ -209,6 +209,14 @@ bool RoadGeneratorHelper::canSnapToEdge(RoadGraph& roads, const QVector2D& pos, 
 		float theta2 = Util::diffAngle(closePt - roads.graph[tgt]->pt, closePt - roads.graph[srcDesc]->pt);
 		if (theta2 <= M_PI * 0.25f) continue;
 
+		if (dist < 37.46f) {
+			int k = 0;
+
+			QVector2D pt1 = roads.graph[src]->pt;
+			QVector2D pt2 = roads.graph[tgt]->pt;
+			float d = GraphUtil::distance(roads, pos, *ei, closePt);
+		}
+
 
 		if (dist < min_dist) {
 			min_dist = dist;

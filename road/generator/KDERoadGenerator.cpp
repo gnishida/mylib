@@ -3,6 +3,7 @@
 #include "../../common/global.h"
 #include "../../common/Util.h"
 #include "../../common/TopNSearch.h"
+#include "../../common/ConvexHull.h"
 #include "../GraphUtil.h"
 #include "KDERoadGenerator.h"
 #include "RoadGeneratorHelper.h"
@@ -709,8 +710,13 @@ void KDERoadGenerator::connectAvenues(RoadGraph &roads, const Polygon2D &area, c
 
 /**
  * 境界上の頂点を延長し、近くのエッジにぶつける
+ * ただし、現在の頂点のConvexHullの外に出たエッジは、そこで延長をストップする。
  */
 void KDERoadGenerator::connectRoads(RoadGraph &roads, RoadAreaSet &areas, float dist_threshold, float angle_threshold) {
+	// ConvexHullを計算する
+	ConvexHull convexHull;
+	Polygon2D hull;
+
 	// 境界上の頂点、エッジの組をリストアップする
 	QList<RoadVertexDesc> boundaryNodes;
 	QMap<RoadVertexDesc, RoadEdgeDesc> boundaryEdges;
@@ -722,6 +728,9 @@ void KDERoadGenerator::connectRoads(RoadGraph &roads, RoadAreaSet &areas, float 
 		RoadVertexDesc src = boost::source(*ei, roads.graph);
 		RoadVertexDesc tgt = boost::target(*ei, roads.graph);
 		
+		convexHull.addPoint(roads.graph[src]->pt);
+		convexHull.addPoint(roads.graph[tgt]->pt);
+
 		if (roads.graph[src]->onBoundary && GraphUtil::getDegree(roads, src) == 1) {
 			if (!boundaryNodes.contains(src)) boundaryNodes.push_back(src);
 			if (!boundaryEdges.contains(src)) boundaryEdges[src] = *ei;
@@ -732,6 +741,8 @@ void KDERoadGenerator::connectRoads(RoadGraph &roads, RoadAreaSet &areas, float 
 			if (!boundaryNodesPair.contains(tgt)) boundaryNodesPair[tgt] = src;
 		}
 	}
+
+	convexHull.convexHull(hull);
 
 	// リストアップしたエッジを、それぞれ少しずつ伸ばしていき、他のエッジにぶつかったらストップする
 	int numIterations = 1000;
@@ -753,13 +764,15 @@ void KDERoadGenerator::connectRoads(RoadGraph &roads, RoadAreaSet &areas, float 
 		step = step.normalized() * 20.0f;
 
 		if (growRoadOneStep(roads, v_desc, step)) {
-			boundaryNodes.push_back(v_desc);
+			if (hull.contains(roads.graph[v_desc]->pt)) {
+				boundaryNodes.push_back(v_desc);
+			}
 		}
 
 		numIterations--;
 	}
 
-	GraphUtil::clean(roads);
+	//GraphUtil::clean(roads);
 }
 
 bool KDERoadGenerator::growRoadOneStep(RoadGraph& roads, RoadVertexDesc srcDesc, const QVector2D& step) {
